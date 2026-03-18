@@ -133,7 +133,7 @@ for i, d in enumerate(FORECAST_DAYS):
     plt.plot(timestamps, y_test_orig[:, i], label="Observed", linewidth=1)
     plt.plot(timestamps, y_pred_orig[:, i], label="Predicted", linewidth=1)
 
-    plt.title(f"Aubachquelle – {d}-Day Ahead Forecast")
+    plt.title(f"395012 – {d}-Day Ahead Forecast")
     plt.xlabel("Time")
     plt.ylabel("Discharge [m³/s]")
     plt.legend()

@@ -26,6 +26,7 @@ optree==0.19.0
 packaging==26.0
 pandas==3.0.1
 pathlib==1.0.1
+patsy==1.0.2
 pillow==12.1.1
 protobuf==7.34.0
 Pygments==2.19.2
@@ -37,6 +38,7 @@ scikit-learn==1.8.0
 scipy==1.17.1
 setuptools==82.0.1
 six==1.17.0
+statsmodels==0.14.6
 tensorflow==2.21.0
 termcolor==3.3.0
 threadpoolctl==3.6.0
