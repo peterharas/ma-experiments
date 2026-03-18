@@ -23,11 +23,11 @@ tf.random.set_seed(SEED)
 random.seed(SEED)
 
 
-TRAIN_PATH = '/Users/peter/pCloud Sync/TU/DataScience/Masterarbeit/Data/ma-datawrangling-v2/springs/395012/395012_train.csv'
-VALID_PATH = '/Users/peter/pCloud Sync/TU/DataScience/Masterarbeit/Data/ma-datawrangling-v2/springs/395012/395012_valid.csv'
-TEST_PATH = '/Users/peter/pCloud Sync/TU/DataScience/Masterarbeit/Data/ma-datawrangling-v2/springs/395012/395012_test.csv'
+TRAIN_PATH = '../data/395012_train.csv'
+VALID_PATH = '../data/395012_valid.csv'
+TEST_PATH = '../data/395012_test.csv'
 
-SCALER_Y_PATH = '/Users/peter/pCloud Sync/TU/DataScience/Masterarbeit/Data/ma-datawrangling-v2/springs/395012/395012_scale_y.pkl'
+SCALER_Y_PATH = '../data/395012_scale_y.pkl'
 
 LOAD=False
 MODEL_PATH = os.path.join("lstm", "lstm.keras")
@@ -49,7 +49,6 @@ LEARNING_RATE = 0.001
 TARGET_COL = 'discharge'
 
 FORECAST_DAYS = [1, 2, 3, 4]
-FORECAST_HOURS = [d * 24 for d in FORECAST_DAYS]
 FORECAST_15MS = [d * 24 * 4 for d in FORECAST_DAYS]
 N_OUTPUTS = len(FORECAST_DAYS)
 
