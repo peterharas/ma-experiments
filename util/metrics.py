@@ -27,7 +27,7 @@ def mean_smape_over_horizons(y_target, y_pred):
 
 def evaluate_forecast(target, pred):
     results = {}
-    results["mse"] = nse(target, pred)
+    results["nse"] = nse(target, pred)
     results["mae"] = mae(target, pred)
     results["rmse"] = root_mean_squared_error(target, pred)
     results["smape"] = smape(target, pred)
