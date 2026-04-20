@@ -1,3 +1,4 @@
+from datetime import datetime
 import matplotlib.pyplot as plt
 import os
 import pandas as pd
@@ -11,6 +12,11 @@ from util.paths import *
 from util.experiment_params import *
 from util.sequencing import create_sequences
 
+
+MODEL = "BASELINE"
+
+experiment_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+results = []
 
 with open(SPRING_LIST_FILE, 'r') as f:
     spring_ids = [line.strip() for line in f if line.strip()]
@@ -49,18 +55,45 @@ for spring_id in spring_ids:
         print(f"\n  === {spring_id} {d}-Day Ahead ===")
         y_target_d = y_test_orig[:, i]
         y_pred_d = y_pred_orig[:, i]
-        print(evaluate_forecast(y_target_d, y_pred_d))
+        metrics = evaluate_forecast(y_target_d, y_pred_d)
+        print(f"    {metrics}")
+
+        plots_base_dir = os.path.join(RESULTS_PLOTS_DIR, spring_id)
+        os.makedirs(plots_base_dir, exist_ok=True)
+        plot_filename = f"{spring_id}_{MODEL}_{d}d_{experiment_timestamp}.png"
+        plot_path = os.path.join(plots_base_dir, plot_filename)
+
+        timestamps_d = ts_test[:, i]
 
         plt.figure(figsize=(12, 4))
-        timestamps_d = ts_test[:, i]
         plt.plot(timestamps_d, y_test_orig[:, i], label="Observed", linewidth=1)
         plt.plot(timestamps_d, y_pred_orig[:, i], label="Predicted", linewidth=1)
-
-        plt.title(f"    {spring_id} – {d}-Day Ahead Forecast")
+        plt.title(f"{spring_id} – {d}-Day Ahead Forecast")
         plt.xlabel("Time")
         plt.ylabel("Discharge [m³/s]")
         plt.legend()
         plt.tight_layout()
-        plt.show()
+        plt.savefig(plot_path, dpi=150)
+        plt.close()  # important to avoid memory issues
 
-    print("break")
+        # Save results
+        results.append({
+            "spring_id": spring_id,
+            "model": MODEL,
+            "horizon": d,
+            "nse": metrics["nse"],
+            "mae": metrics["mae"],
+            "rmse": metrics["rmse"],
+            "smape": metrics["smape"],
+        })
+
+results_df = pd.DataFrame(results)
+
+os.makedirs(RESULTS_DIR, exist_ok=True)
+
+filename = f"{MODEL}_results_{experiment_timestamp}.csv"
+
+save_path = os.path.join(RESULTS_DIR, filename)
+results_df.to_csv(save_path, index=False)
+
+print(f"\nResults saved to: {save_path}")
