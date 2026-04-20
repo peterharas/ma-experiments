@@ -21,15 +21,16 @@ results = []
 with open(SPRING_LIST_FILE, 'r') as f:
     spring_ids = [line.strip() for line in f if line.strip()]
 
-# For dev purposes
-spring_ids = ["395012"]
-
 for spring_id in spring_ids:
     print(f"Calculating baseline for {spring_id}...")
 
     SPRING_DIR = os.path.join(SRINGS_BASE_DIR, spring_id)
     TEST_PATH = os.path.join(SPRING_DIR, f"{spring_id}_test.csv")
     SCALER_Y_PATH = os.path.join(SPRING_DIR, f"{spring_id}_scale_y.pkl")
+    
+    if not os.path.exists(TEST_PATH) or not os.path.exists(SCALER_Y_PATH):
+        print(f"    Skipping {spring_id} because of missing data")
+        continue
 
     test_df = pd.read_csv(TEST_PATH, parse_dates=['timestamp'])
     input_cols = [c for c in test_df.columns if c not in ['timestamp']]
@@ -52,11 +53,11 @@ for spring_id in spring_ids:
 
     # Evaluation
     for i, d in enumerate(FORECAST_DAYS):
-        print(f"\n  === {spring_id} {d}-Day Ahead ===")
+        # print(f"\n  === {spring_id} {d}-Day Ahead ===")
         y_target_d = y_test_orig[:, i]
         y_pred_d = y_pred_orig[:, i]
         metrics = evaluate_forecast(y_target_d, y_pred_d)
-        print(f"    {metrics}")
+        # print(f"    {metrics}")
 
         plots_base_dir = os.path.join(RESULTS_PLOTS_DIR, spring_id)
         os.makedirs(plots_base_dir, exist_ok=True)
