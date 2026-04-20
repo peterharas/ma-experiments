@@ -1,6 +1,8 @@
+import matplotlib.pyplot as plt
 import os
-import sys
 import pandas as pd
+import pickle
+import sys
 
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
@@ -25,10 +27,40 @@ for spring_id in spring_ids:
 
     test_df = pd.read_csv(TEST_PATH, parse_dates=['timestamp'])
     input_cols = [c for c in test_df.columns if c not in ['timestamp']]
-    X_test, y_test  = create_sequences(test_df[input_cols], test_df[TARGET_COL], WINDOW_LEN, FORECAST_15MS)
+    X_test, y_test, ts_test  = create_sequences(test_df[input_cols], 
+                                       test_df[TARGET_COL],
+                                       test_df["timestamp"], 
+                                       WINDOW_LEN, 
+                                       FORECAST_15MS)
 
     X_test_target =  X_test[:, :, 1]
     means = X_test_target.mean(axis=1)
     y_pred = np.repeat(means[:, np.newaxis], 4, axis=1)
+
+    with open(SCALER_Y_PATH, 'rb') as f:
+        y_scaler = pickle.load(f)
+
+    # Inverse transform to original scale and convert to m^3/s
+    y_test_orig = y_scaler.inverse_transform(y_test) * 0.001
+    y_pred_orig = y_scaler.inverse_transform(y_pred)  * 0.001
+
+    # Evaluation
+    for i, d in enumerate(FORECAST_DAYS):
+        print(f"\n  === {spring_id} {d}-Day Ahead ===")
+        y_target_d = y_test_orig[:, i]
+        y_pred_d = y_pred_orig[:, i]
+        print(evaluate_forecast(y_target_d, y_pred_d))
+
+        plt.figure(figsize=(12, 4))
+        timestamps_d = ts_test[:, i]
+        plt.plot(timestamps_d, y_test_orig[:, i], label="Observed", linewidth=1)
+        plt.plot(timestamps_d, y_pred_orig[:, i], label="Predicted", linewidth=1)
+
+        plt.title(f"    {spring_id} – {d}-Day Ahead Forecast")
+        plt.xlabel("Time")
+        plt.ylabel("Discharge [m³/s]")
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
 
     print("break")
