@@ -14,8 +14,18 @@ def rmse(target, pred):
     return root_mean_squared_error(target, pred)
 
 
+
 def smape(target, pred):
-    return 100/len(target) * np.sum(np.abs(target - pred) / ((np.abs(target) + np.abs(pred)) / 2))
+    target = np.array(target)
+    pred = np.array(pred)
+    
+    denom = (np.abs(target) + np.abs(pred)) / 2
+    
+    # Check for division by zero
+    if np.any(denom == 0):
+        return None
+    
+    return 100 / len(target) * np.sum(np.abs(target - pred) / denom)
 
 
 def mean_smape_over_horizons(y_target, y_pred):
