@@ -12,6 +12,8 @@ from util.paths import *
 from util.experiment_params import *
 from util.sequencing import create_sequences
 
+from codecarbon import EmissionsTracker
+
 
 MODEL = "BASELINE"
 
@@ -40,9 +42,16 @@ for spring_id in spring_ids:
                                        WINDOW_LEN, 
                                        FORECAST_15MS)
 
+    tracker = EmissionsTracker(log_level="error")
+    tracker.start()
+
     X_test_target =  X_test[:, :, 1]
     means = X_test_target.mean(axis=1)
     y_pred = np.repeat(means[:, np.newaxis], 4, axis=1)
+
+    emissions = tracker.stop()
+    energy_kwh = tracker.final_emissions_data.energy_consumed
+
 
     with open(SCALER_Y_PATH, 'rb') as f:
         y_scaler = pickle.load(f)
@@ -86,6 +95,8 @@ for spring_id in spring_ids:
             "mae": metrics["mae"],
             "rmse": metrics["rmse"],
             "smape": metrics["smape"],
+            "emissions [kg CO₂]": emissions,
+            "energy [kWh]": energy_kwh
         })
 
 results_df = pd.DataFrame(results)
