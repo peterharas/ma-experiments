@@ -6,4 +6,5 @@ data
 
 *.png
 *.csv
+*.json
 powermetrics_log.txt

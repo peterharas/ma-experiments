@@ -16,6 +16,7 @@ from util.sequencing import create_sequences
 from codecarbon import EmissionsTracker
 
 import tensorflow as tf
+import keras_tuner as kt
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping
 from keras.models import Sequential
@@ -69,6 +70,33 @@ N_DENSE_LAYERS = 0  # to be tuned
 LEARNING_RATE = 0.001 # to be tuned
 
 
+def model_builder(hp):
+    lstm_units = hp.Choice("lstm_units", [64, 96, 128])
+    dropout = hp.Choice("dropout", [0.1, 0.2])
+    lr = hp.Choice("lr", [0.01, 0.001, 0.0001])
+    dense = hp.Choice("dense_layers", [0, 1])
+
+    model = Sequential()
+    model.add(LSTM(lstm_units, input_shape=(WINDOW_LEN, len(input_cols)), dropout=dropout))
+
+    for _ in range(dense):
+        model.add(Dense(lstm_units, activation="relu"))
+
+    model.add(Dense(len(FORECAST_DAYS)))
+
+    model.compile(
+        optimizer=Adam(learning_rate=lr),
+        loss=LOSS
+    )
+
+    return model
+
+early_stopping = EarlyStopping(
+    monitor="val_loss",
+    patience=5,
+    restore_best_weights=True
+)
+
 with open(SPRING_LIST_FILE, 'r') as f:
     spring_ids = [line.strip() for line in f if line.strip()]
 
@@ -116,32 +144,46 @@ for spring_id in spring_ids:
                                        WINDOW_LEN, 
                                        FORECAST_15MS)
       
-    model = Sequential([
-    LSTM(LSTM_UNITS, input_shape=(WINDOW_LEN, len(input_cols)), dropout=DROPOUT),
-    Dense(len(FORECAST_DAYS))
-    ])
-    model.compile(optimizer=Adam(learning_rate=LEARNING_RATE), loss=LOSS)
-    early_stopping = EarlyStopping(monitor=EARLY_STOPPING_MONITOR, patience=EARLY_STOPPING_PATIENCE, restore_best_weights=True)
+
     
     print("     Training...")
     
     tracker = EmissionsTracker(log_level="error")
     tracker.start()
 
-    model.fit(
+    tuner = kt.Hyperband(
+        model_builder,
+        objective="val_loss",
+        max_epochs=EPOCHS,
+        directory="tuning",
+        project_name=f"{MODEL}_{spring_id}_{experiment_timestamp}",
+        overwrite=True,
+        seed=SEED
+    )
+
+    tuner.search(
         X_train, y_train,
-        batch_size=BATCH_SIZE,
-        epochs=EPOCHS,
         validation_data=(X_valid, y_valid),
+        epochs=EPOCHS,
+        batch_size=BATCH_SIZE,
         callbacks=[early_stopping],
         verbose=1
     )
-    
+
+    model = tuner.get_best_models(1)[0]
+
     emissions_train = tracker.stop()
     energy_kwh_train = tracker.final_emissions_data.energy_consumed
 
     model.save(os.path.join(SPRING_MODEL_DIR, f"{MODEL}_{spring_id}_{experiment_timestamp}.keras"))
 
+    best_hp = tuner.get_best_hyperparameters(1)[0]
+    best_params_dict = {
+        "lstm_units": best_hp.get("lstm_units"),
+        "dropout": best_hp.get("dropout"),
+        "learning_rate": best_hp.get("learning_rate"),
+        "n_dense_layers": best_hp.get("n_dense_layers"),
+    }
 
     print("     Inference...")
 
@@ -194,7 +236,11 @@ for spring_id in spring_ids:
             "emissions training [kg CO₂]": emissions_train,
             "energy training [kWh]": energy_kwh_train,
             "emissions inference [kg CO₂]": emissions_inference,
-            "energy inference [kWh]": energy_kwh_inference
+            "energy inference [kWh]": energy_kwh_inference,
+            "lstm_units": best_params_dict["lstm_units"],
+            "dropout": best_params_dict["dropout"],
+            "learning_rate": best_params_dict["learning_rate"],
+            "n_dense_layers": best_params_dict["n_dense_layers"]
         })
 
     results_df = pd.DataFrame(results)
