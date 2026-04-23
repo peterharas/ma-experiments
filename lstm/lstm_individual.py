@@ -36,7 +36,7 @@ os.makedirs(MODELS_DIR, exist_ok=True)
 
 # Model params
 # Requirements for CUDNN: https://keras.io/api/layers/recurrent_layers/lstm/
-BATCH_SIZE = 96 # to be tuned, 24 in original paper, here 24 * 4 for 15 min
+BATCH_SIZE = 96 # 24 in original paper, here 24 * 4 for 15 min
 DROPOUT = 0.1  # to be tuned
 EARLY_STOPPING_MONITOR = 'val_loss'
 EARLY_STOPPING_PATIENCE = 5
