@@ -1,0 +1,5 @@
+Fix exeuction problem: 
+
+https://github.com/tensorflow/tensorflow/issues/60913
+
+pip3 install -U nvidia-cudnn-cu11
