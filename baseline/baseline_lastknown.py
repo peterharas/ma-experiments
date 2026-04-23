@@ -15,7 +15,7 @@ from util.sequencing import create_sequences
 from codecarbon import EmissionsTracker
 
 
-MODEL = "BASELINE"
+MODEL = "BASELINE_LASTKNOWN"
 
 experiment_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 results = []
@@ -46,8 +46,8 @@ for spring_id in spring_ids:
     tracker.start()
 
     X_test_target =  X_test[:, :, 1]
-    means = X_test_target.mean(axis=1)
-    y_pred = np.repeat(means[:, np.newaxis], 4, axis=1)
+    last_vals = X_test_target[:, -1]  # shape: (samples,)
+    y_pred = np.repeat(last_vals[:, np.newaxis], 4, axis=1)
 
     emissions = tracker.stop()
     energy_kwh = tracker.final_emissions_data.energy_consumed

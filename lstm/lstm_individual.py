@@ -175,7 +175,7 @@ for spring_id in spring_ids:
         plt.figure(figsize=(12, 4))
         plt.plot(timestamps_d, y_test_orig[:, i], label="Observed", linewidth=1)
         plt.plot(timestamps_d, y_pred_orig[:, i], label="Predicted", linewidth=1)
-        plt.title(f"{spring_id} – {d}-Day Ahead Forecast")
+        plt.title(f"{MODEL} {spring_id} – {d}-Day Ahead Forecast")
         plt.xlabel("Time")
         plt.ylabel("Discharge [m³/s]")
         plt.legend()
