@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pickle
 import sys
+import random
 
 from datetime import datetime
 
@@ -21,6 +22,27 @@ from keras.models import Sequential
 from keras.layers import LSTM, Dense
 
 print(tf.config.list_physical_devices('GPU'))
+
+# -----------------------
+# Global reproducibility
+# -----------------------
+SEED = 12019844
+
+# Python
+os.environ["PYTHONHASHSEED"] = str(SEED)
+
+# Python built-in RNG
+random.seed(SEED)
+
+# NumPy
+np.random.seed(SEED)
+
+# TensorFlow
+tf.random.set_seed(SEED)
+
+# (optional but recommended for full determinism)
+os.environ["TF_DETERMINISTIC_OPS"] = "1"
+os.environ["TF_CUDNN_DETERMINISTIC"] = "1"
 
 experiment_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
