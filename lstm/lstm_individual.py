@@ -14,10 +14,13 @@ from util.sequencing import create_sequences
 
 from codecarbon import EmissionsTracker
 
+import tensorflow as tf
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping
 from keras.models import Sequential
 from keras.layers import LSTM, Dense
+
+print(tf.config.list_physical_devices('GPU'))
 
 experiment_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -32,9 +35,9 @@ MODELS_DIR = os.path.join("lstm", "models")
 os.makedirs(MODELS_DIR, exist_ok=True)
 
 # Model params
-BATCH_SIZE = 24 # to be tuned
+# Requirements for CUDNN: https://keras.io/api/layers/recurrent_layers/lstm/
+BATCH_SIZE = 96 # to be tuned, 24 in original paper, here 24 * 4 for 15 min
 DROPOUT = 0.1  # to be tuned
-RECURRENT_DROPOUT_RATE = 0.3 # to be tuned
 EARLY_STOPPING_MONITOR = 'val_loss'
 EARLY_STOPPING_PATIENCE = 5
 EPOCHS = 100
@@ -54,8 +57,8 @@ for spring_id in spring_ids:
     print(f"Running {MODEL} for {spring_id}...")
 
     SPRING_DIR = os.path.join(SRINGS_BASE_DIR, spring_id)
-    TRAIN_PATH = os.path.join(SPRING_DIR, f"{spring_id}_test.csv")
-    VALID_PATH = os.path.join(SPRING_DIR, f"{spring_id}_test.csv")
+    TRAIN_PATH = os.path.join(SPRING_DIR, f"{spring_id}_train.csv")
+    VALID_PATH = os.path.join(SPRING_DIR, f"{spring_id}_valid.csv")
     TEST_PATH = os.path.join(SPRING_DIR, f"{spring_id}_test.csv")
     SCALER_Y_PATH = os.path.join(SPRING_DIR, f"{spring_id}_scale_y.pkl")
 
@@ -92,7 +95,7 @@ for spring_id in spring_ids:
                                        FORECAST_15MS)
       
     model = Sequential([
-    LSTM(LSTM_UNITS, input_shape=(WINDOW_LEN, len(input_cols)), dropout=DROPOUT, recurrent_dropout=RECURRENT_DROPOUT_RATE),
+    LSTM(LSTM_UNITS, input_shape=(WINDOW_LEN, len(input_cols)), dropout=DROPOUT),
     Dense(len(FORECAST_DAYS))
     ])
     model.compile(optimizer=Adam(learning_rate=LEARNING_RATE), loss=LOSS)
