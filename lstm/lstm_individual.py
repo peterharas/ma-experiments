@@ -181,8 +181,8 @@ for spring_id in spring_ids:
     best_params_dict = {
         "lstm_units": best_hp.get("lstm_units"),
         "dropout": best_hp.get("dropout"),
-        "learning_rate": best_hp.get("learning_rate"),
-        "n_dense_layers": best_hp.get("n_dense_layers"),
+        "learning_rate": best_hp.get("lr"),
+        "n_dense_layers": best_hp.get("dense_layers"),
     }
 
     print("     Inference...")
