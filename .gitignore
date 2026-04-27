@@ -3,8 +3,8 @@ venv
 __pycache__
 .DS_Store
 data
-
-*.png
-*.csv
+results
+tuning
+emissions.csv
 *.json
 powermetrics_log.txt
