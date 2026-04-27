@@ -59,7 +59,7 @@ os.makedirs(MODELS_DIR, exist_ok=True)
 
 # Model params
 # Requirements for CUDNN: https://keras.io/api/layers/recurrent_layers/lstm/
-BATCH_SIZE = 96 # 24 in original paper, here 24 * 4 for 15 min
+BATCH_SIZE = 24
 DROPOUT = 0.1  # to be tuned
 EARLY_STOPPING_MONITOR = 'val_loss'
 EARLY_STOPPING_PATIENCE = 5
@@ -130,19 +130,19 @@ for spring_id in spring_ids:
                                        train_df[TARGET_COL],
                                        train_df["timestamp"], 
                                        WINDOW_LEN, 
-                                       FORECAST_15MS)
+                                       FORECAST_HS)
 
     X_valid, y_valid, ts_valid  = create_sequences(valid_df[input_cols], 
                                        valid_df[TARGET_COL],
                                        valid_df["timestamp"], 
                                        WINDOW_LEN, 
-                                       FORECAST_15MS)
+                                       FORECAST_HS)
 
     X_test, y_test, ts_test  = create_sequences(test_df[input_cols], 
                                        test_df[TARGET_COL],
                                        test_df["timestamp"], 
                                        WINDOW_LEN, 
-                                       FORECAST_15MS)
+                                       FORECAST_HS)
       
 
     

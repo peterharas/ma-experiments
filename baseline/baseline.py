@@ -40,7 +40,7 @@ for spring_id in spring_ids:
                                        test_df[TARGET_COL],
                                        test_df["timestamp"], 
                                        WINDOW_LEN, 
-                                       FORECAST_15MS)
+                                       FORECAST_HS)
 
     tracker = EmissionsTracker(log_level="error")
     tracker.start()
