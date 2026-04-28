@@ -311,10 +311,7 @@ for spring_id in spring_ids:
             "num_heads": best_hp.get("num_heads"),
             "ff_dim": best_hp.get("ff_dim"),
             "num_transformer_blocks": best_hp.get("num_transformer_blocks"),
-            "dropout": best_hp.get("dropout"),
-            "mlp_units": best_hp.get("mlp_units"),
-            "mlp_dropout": best_hp.get("mlp_dropout"),
-            "learning_rate": best_hp.get("lr")
+            "mlp_units": best_hp.get("mlp_units")
         })
 
     results_df = pd.DataFrame(results)
