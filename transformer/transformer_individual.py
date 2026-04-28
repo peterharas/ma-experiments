@@ -70,6 +70,8 @@ EARLY_STOPPING_PATIENCE = 3
 
 def transformer_encoder(x, head_size, num_heads, ff_dim, dropout):
     # Attention block
+    # Pre-Layer Normalization: https://sh-tsang.medium.com/review-pre-ln-transformer-on-layer-normalization-in-the-transformer-architecture-b6c91a89e9ab
+    # Xiong et al., On Layer Normalization in the Transformer Architecture
     x_norm = layers.LayerNormalization(epsilon=1e-6)(x)
     attn = layers.MultiHeadAttention(
         key_dim=head_size,
