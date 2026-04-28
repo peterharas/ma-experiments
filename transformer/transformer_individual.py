@@ -61,9 +61,11 @@ os.makedirs(MODELS_DIR, exist_ok=True)
 LOSS = 'mae'
 BATCH_SIZE = 24
 EPOCHS = 100
-LEARNING_RATE = 0.001 # to be tuned
+LEARNING_RATE = 0.001
+DROPOUT = 0.1
+MLP_DROPOUT = 0.1
 EARLY_STOPPING_MONITOR = 'val_loss'
-EARLY_STOPPING_PATIENCE = 5
+EARLY_STOPPING_PATIENCE = 3
 
 
 def transformer_encoder(x, head_size, num_heads, ff_dim, dropout):
@@ -95,14 +97,14 @@ def model_builder(hp):
     ff_dim = hp.Choice("ff_dim", [16, 32])
     num_blocks = hp.Choice("num_transformer_blocks", [1, 2])
     # dropout = hp.Choice("dropout", [0.1, 0.2])
-    dropout = 0.1
+    dropout = DROPOUT
 
     mlp_units = hp.Choice("mlp_units", [32, 64])
-    mlp_dropout = 0.1
+    mlp_dropout = MLP_DROPOUT
     # mlp_dropout = hp.Choice("mlp_dropout", [0.1, 0.2])
 
     # lr = hp.Choice("lr", [1e-3, 1e-4])
-    lr = 1e-3
+    lr = LEARNING_RATE
 
     # -----------------------
     # Input
@@ -144,7 +146,7 @@ def model_builder(hp):
 
 early_stopping = EarlyStopping(
     monitor="val_loss",
-    patience=3,
+    patience=EARLY_STOPPING_PATIENCE,
     restore_best_weights=True
 )
 
