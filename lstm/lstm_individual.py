@@ -60,14 +60,10 @@ os.makedirs(MODELS_DIR, exist_ok=True)
 # Model params
 # Requirements for CUDNN: https://keras.io/api/layers/recurrent_layers/lstm/
 BATCH_SIZE = 24
-DROPOUT = 0.1  # to be tuned
 EARLY_STOPPING_MONITOR = 'val_loss'
 EARLY_STOPPING_PATIENCE = 5
 EPOCHS = 100
 LOSS = 'mae'
-LSTM_UNITS = 96  # to be tuned
-N_DENSE_LAYERS = 0  # to be tuned
-LEARNING_RATE = 0.001 # to be tuned
 
 
 def model_builder(hp):
@@ -194,7 +190,7 @@ for spring_id in spring_ids:
 
     emissions_inference = tracker.stop()
     energy_kwh_inference = tracker.final_emissions_data.energy_consumed
-
+# 
     with open(SCALER_Y_PATH, 'rb') as f:
         y_scaler = pickle.load(f)
 
@@ -243,5 +239,5 @@ for spring_id in spring_ids:
             "n_dense_layers": best_params_dict["n_dense_layers"]
         })
 
-    results_df = pd.DataFrame(results)
-    results_df.to_csv(RESULTS_FILEPATH, index=False)
+results_df = pd.DataFrame(results)
+results_df.to_csv(RESULTS_FILEPATH, index=False)
