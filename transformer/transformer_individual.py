@@ -94,12 +94,15 @@ def model_builder(hp):
     num_heads = hp.Choice("num_heads", [2, 4])
     ff_dim = hp.Choice("ff_dim", [16, 32])
     num_blocks = hp.Choice("num_transformer_blocks", [1, 2])
-    dropout = hp.Choice("dropout", [0.1, 0.2])
+    # dropout = hp.Choice("dropout", [0.1, 0.2])
+    dropout = 0.1
 
     mlp_units = hp.Choice("mlp_units", [32, 64])
-    mlp_dropout = hp.Choice("mlp_dropout", [0.1, 0.2])
+    mlp_dropout = 0.1
+    # mlp_dropout = hp.Choice("mlp_dropout", [0.1, 0.2])
 
-    lr = hp.Choice("lr", [1e-3, 1e-4])
+    # lr = hp.Choice("lr", [1e-3, 1e-4])
+    lr = 1e-3
 
     # -----------------------
     # Input
@@ -141,7 +144,7 @@ def model_builder(hp):
 
 early_stopping = EarlyStopping(
     monitor="val_loss",
-    patience=5,
+    patience=3,
     restore_best_weights=True
 )
 
