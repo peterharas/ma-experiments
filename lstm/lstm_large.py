@@ -45,6 +45,9 @@ tf.random.set_seed(SEED)
 os.environ["TF_DETERMINISTIC_OPS"] = "1"
 os.environ["TF_CUDNN_DETERMINISTIC"] = "1"
 
+
+# ----------------------- EXPERIMENT SETUP -----------------------
+
 experiment_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 MODEL = "LSTM_LARGE"
@@ -53,6 +56,7 @@ os.makedirs(RESULTS_DIR, exist_ok=True)
 RESULTS_FILENAME = f"{MODEL}_results_{experiment_timestamp}.csv"
 RESULTS_FILEPATH = os.path.join(RESULTS_DIR, RESULTS_FILENAME)
 results = []
+
 
 MODELS_DIR = os.path.join("lstm", "models")
 os.makedirs(MODELS_DIR, exist_ok=True)
@@ -95,12 +99,11 @@ early_stopping = EarlyStopping(
     restore_best_weights=True
 )
 
+
+# ----------------------- DATA PREPARATION -----------------------
+
 with open(SPRING_LIST_FILE_TRAIN, 'r') as f:
     spring_ids_train = [line.strip() for line in f if line.strip()]
-
-with open(SPRING_LIST_FILE_UNSEEN, 'r') as f:
-    spring_ids_unseen = [line.strip() for line in f if line.strip()]
-
 
 X_train_all, y_train_all = [], []
 X_valid_all, y_valid_all = [], []
@@ -152,6 +155,8 @@ X_valid_all = np.concatenate(X_valid_all, axis=0)
 y_valid_all = np.concatenate(y_valid_all, axis=0)
 
 
+# ----------------------- TRAINING -----------------------
+
 print("     Training...")
 
 tracker = EmissionsTracker(log_level="error")
@@ -184,3 +189,94 @@ energy_kwh_train = tracker.final_emissions_data.energy_consumed
 
 model.save(os.path.join(LARGE_MODEL_DIR, f"{MODEL}_{experiment_timestamp}.keras"))
 
+best_hp = tuner.get_best_hyperparameters(1)[0]
+best_params_dict = {
+    "lstm_units": best_hp.get("lstm_units"),
+    "dropout": best_hp.get("dropout"),
+    "learning_rate": best_hp.get("lr"),
+    "n_dense_layers": best_hp.get("dense_layers"),
+}
+
+# ----------------------- INFERENCE -----------------------
+
+print("     Inference...")
+
+with open(SPRING_LIST_FILE_UNSEEN, 'r') as f:
+    spring_ids_unseen = [line.strip() for line in f if line.strip()]
+
+for spring_id in spring_ids_unseen:
+    print(f"Evaluating {MODEL} for {spring_id}...")
+    SPRING_DIR = os.path.join(SRINGS_BASE_DIR, spring_id)
+
+    TEST_PATH = os.path.join(SPRING_DIR, f"{spring_id}_test.csv")
+    SCALER_Y_PATH = os.path.join(SPRING_DIR, f"{spring_id}_scale_y.pkl")
+
+    if not os.path.exists(TEST_PATH) or not os.path.exists(SCALER_Y_PATH):
+        print(f"    Skipping {spring_id} because of missing data, scaler-free evaluation tbd...")
+        continue
+
+    test_df = pd.read_csv(TEST_PATH, parse_dates=['timestamp'])
+    X_test, y_test, ts_test  = create_sequences(test_df[input_cols], 
+                                    test_df[TARGET_COL],
+                                    test_df["timestamp"], 
+                                    WINDOW_LEN, 
+                                    FORECAST_HS)   
+
+    tracker = EmissionsTracker(log_level="error")
+    tracker.start()
+
+    y_pred = model.predict(X_test)
+
+    emissions_inference = tracker.stop()
+    energy_kwh_inference = tracker.final_emissions_data.energy_consumed
+
+    with open(SCALER_Y_PATH, 'rb') as f:
+        y_scaler = pickle.load(f)
+
+    # Inverse transform to original scale and convert to m^3/s
+    y_test_orig = y_scaler.inverse_transform(y_test) * 0.001
+    y_pred_orig = y_scaler.inverse_transform(y_pred)  * 0.001
+
+    for i, d in enumerate(FORECAST_DAYS):
+        y_target_d = y_test_orig[:, i]
+        y_pred_d = y_pred_orig[:, i]
+        metrics = evaluate_forecast(y_target_d, y_pred_d)
+
+        plots_base_dir = os.path.join(RESULTS_PLOTS_DIR, spring_id)
+        os.makedirs(plots_base_dir, exist_ok=True)
+        plot_filename = f"{spring_id}_{MODEL}_{d}d_{experiment_timestamp}.png"
+        plot_path = os.path.join(plots_base_dir, plot_filename)
+
+        timestamps_d = ts_test[:, i]
+
+        plt.figure(figsize=(12, 4))
+        plt.plot(timestamps_d, y_test_orig[:, i], label="Observed", linewidth=1)
+        plt.plot(timestamps_d, y_pred_orig[:, i], label="Predicted", linewidth=1)
+        plt.title(f"{MODEL} {spring_id} – {d}-Day Ahead Forecast")
+        plt.xlabel("Time")
+        plt.ylabel("Discharge [m³/s]")
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(plot_path, dpi=150)
+        plt.close()
+
+        results.append({
+            "spring_id": spring_id,
+            "model": MODEL,
+            "horizon": d,
+            "nse": metrics["nse"],
+            "mae": metrics["mae"],
+            "rmse": metrics["rmse"],
+            "smape": metrics["smape"],
+            "emissions training [kg CO₂]": emissions_train,
+            "energy training [kWh]": energy_kwh_train,
+            "emissions inference [kg CO₂]": emissions_inference,
+            "energy inference [kWh]": energy_kwh_inference,
+            "lstm_units": best_params_dict["lstm_units"],
+            "dropout": best_params_dict["dropout"],
+            "learning_rate": best_params_dict["learning_rate"],
+            "n_dense_layers": best_params_dict["n_dense_layers"]
+        })
+
+results_df = pd.DataFrame(results)
+results_df.to_csv(RESULTS_FILEPATH, index=False)
