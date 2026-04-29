@@ -193,6 +193,10 @@ best_params_dict = {
 
 # ----------------------- INFERENCE -----------------------
 
+# TODO: evaluate all springs instead of only unseen
+# TODO: add unseen/train flag based on whether spring_id in spring_ids_unseen
+# TODO: handle case where no scaler_y_path is given (= no validation data)
+
 print("     Inference...")
 
 with open(SPRING_LIST_FILE_UNSEEN, 'r') as f:
