@@ -115,37 +115,31 @@ for spring_id in spring_ids_train:
     TRAIN_PATH = os.path.join(SPRING_DIR, f"{spring_id}_train.csv")
     VALID_PATH = os.path.join(SPRING_DIR, f"{spring_id}_valid.csv")
     
-    if not os.path.exists(TRAIN_PATH) or not os.path.exists(VALID_PATH):
-        print(f"    Skipping {spring_id} because of missing data")
-        continue
+    if os.path.exists(TRAIN_PATH):
+        train_df = pd.read_csv(TRAIN_PATH, parse_dates=['timestamp'])
+        input_cols = [c for c in train_df.columns if c not in ['timestamp']]
+        X_train, y_train, _ = create_sequences(
+            train_df[input_cols],
+            train_df[TARGET_COL],
+            train_df["timestamp"],
+            WINDOW_LEN,
+            FORECAST_HS
+        )
+        X_train_all.append(X_train)
+        y_train_all.append(y_train)
 
-    train_df = pd.read_csv(TRAIN_PATH, parse_dates=['timestamp'])
-    valid_df = pd.read_csv(VALID_PATH, parse_dates=['timestamp'])
-
-    input_cols = [c for c in train_df.columns if c not in ['timestamp']]
-
-    # --- create sequences ---
-    X_train, y_train, _ = create_sequences(
-        train_df[input_cols],
-        train_df[TARGET_COL],
-        train_df["timestamp"],
-        WINDOW_LEN,
-        FORECAST_HS
-    )
-
-    X_valid, y_valid, _ = create_sequences(
-        valid_df[input_cols],
-        valid_df[TARGET_COL],
-        valid_df["timestamp"],
-        WINDOW_LEN,
-        FORECAST_HS
-    )
-
-    X_train_all.append(X_train)
-    y_train_all.append(y_train)
-
-    X_valid_all.append(X_valid)
-    y_valid_all.append(y_valid)
+    if os.path.exists(VALID_PATH):
+        valid_df = pd.read_csv(VALID_PATH, parse_dates=['timestamp'])
+        input_cols = [c for c in valid_df.columns if c not in ['timestamp']]
+        X_valid, y_valid, _ = create_sequences(
+            valid_df[input_cols],
+            valid_df[TARGET_COL],
+            valid_df["timestamp"],
+            WINDOW_LEN,
+            FORECAST_HS
+        )
+        X_valid_all.append(X_valid)
+        y_valid_all.append(y_valid)
 
 
 X_train_all = np.concatenate(X_train_all, axis=0)
