@@ -239,5 +239,5 @@ for spring_id in spring_ids:
             "n_dense_layers": best_params_dict["n_dense_layers"]
         })
 
-results_df = pd.DataFrame(results)
-results_df.to_csv(RESULTS_FILEPATH, index=False)
+    results_df = pd.DataFrame(results)
+    results_df.to_csv(RESULTS_FILEPATH, index=False)
