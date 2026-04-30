@@ -19,8 +19,8 @@ import tensorflow as tf
 import keras_tuner as kt
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping
-from keras.models import Sequential
-from keras.layers import LSTM, Dense
+
+from keras import Model, Input, layers
 
 print(tf.config.list_physical_devices('GPU'))
 
@@ -45,46 +45,123 @@ tf.random.set_seed(SEED)
 os.environ["TF_DETERMINISTIC_OPS"] = "1"
 os.environ["TF_CUDNN_DETERMINISTIC"] = "1"
 
-
 # ----------------------- EXPERIMENT SETUP -----------------------
+
 
 experiment_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-MODEL = "LSTM_LARGE"
+MODEL = "TRANSFORMER_LARGE"
 
 os.makedirs(RESULTS_DIR, exist_ok=True)
 RESULTS_FILENAME = f"{MODEL}_results_{experiment_timestamp}.csv"
 RESULTS_FILEPATH = os.path.join(RESULTS_DIR, RESULTS_FILENAME)
 results = []
 
-
-MODELS_DIR = os.path.join("lstm", "models")
+MODELS_DIR = os.path.join("transformer", "models")
 os.makedirs(MODELS_DIR, exist_ok=True)
-
-# Model params
-BATCH_SIZE = 24
-EARLY_STOPPING_MONITOR = 'val_loss'
-EARLY_STOPPING_PATIENCE = 5
-EPOCHS = 100
-LOSS = 'mae'
 
 LARGE_MODEL_DIR = os.path.join(MODELS_DIR, "large")
 os.makedirs(LARGE_MODEL_DIR, exist_ok=True)
 
+LOSS = 'mae'
+BATCH_SIZE = 24
+EPOCHS = 100
+LEARNING_RATE = 0.001
+DROPOUT = 0.1
+MLP_DROPOUT = 0.1
+EARLY_STOPPING_MONITOR = 'val_loss'
+EARLY_STOPPING_PATIENCE = 3
+
+
+def transformer_encoder(x, head_size, num_heads, ff_dim, dropout):
+    # Attention block
+    # Pre-Layer Normalization: https://sh-tsang.medium.com/review-pre-ln-transformer-on-layer-normalization-in-the-transformer-architecture-b6c91a89e9ab
+    # Xiong et al., On Layer Normalization in the Transformer Architecture
+    x_norm = layers.LayerNormalization(epsilon=1e-6)(x)
+    attn = layers.MultiHeadAttention(
+        key_dim=head_size,
+        num_heads=num_heads,
+        dropout=dropout
+    )(x_norm, x_norm)
+    attn = layers.Dropout(dropout)(attn)
+    x = x + attn  # residual
+
+    # Feed-forward block
+    x_norm = layers.LayerNormalization(epsilon=1e-6)(x)
+    ff = layers.Conv1D(filters=ff_dim, kernel_size=1, activation="relu")(x_norm)
+    ff = layers.Dropout(dropout)(ff)
+    ff = layers.Conv1D(filters=x.shape[-1], kernel_size=1)(ff)
+
+    return x + ff  # residual
+
+
+def get_angles(pos, i, d_model):
+    angle_rates = 1 / np.power(10000, (2 * (i//2)) / np.float32(d_model))
+    return pos * angle_rates
+
+def positional_encoding(position, d_model):
+    angle_rads = get_angles(np.arange(position)[:, np.newaxis],
+                          np.arange(d_model)[np.newaxis, :],
+                          d_model)
+
+  # apply sin to even indices in the array; 2i
+    angle_rads[:, 0::2] = np.sin(angle_rads[:, 0::2])
+
+  # apply cos to odd indices in the array; 2i+1
+    angle_rads[:, 1::2] = np.cos(angle_rads[:, 1::2])
+    pos_encoding = angle_rads[np.newaxis, ...]
+    return tf.cast(pos_encoding, dtype=tf.float32)
+
+
 def model_builder(hp):
-    lstm_units = hp.Choice("lstm_units", [64, 96, 128])
-    dropout = hp.Choice("dropout", [0.1, 0.2])
-    lr = hp.Choice("lr", [0.01, 0.001, 0.0001])
-    dense = hp.Choice("dense_layers", [0, 1])
+    # -----------------------
+    # Hyperparameters (SLIM)
+    # -----------------------
+    head_size = hp.Choice("head_size", [8, 16])
+    num_heads = hp.Choice("num_heads", [2, 4])
+    ff_dim = hp.Choice("ff_dim", [16, 32])
+    num_blocks = hp.Choice("num_transformer_blocks", [1, 2])
+    # dropout = hp.Choice("dropout", [0.1, 0.2])
+    dropout = DROPOUT
 
-    model = Sequential()
-    # Warning, input_cols is a function-external dependency which should be consistent accross springs
-    model.add(LSTM(lstm_units, input_shape=(WINDOW_LEN, len(input_cols)), dropout=dropout))
+    mlp_units = hp.Choice("mlp_units", [32, 64])
+    mlp_dropout = MLP_DROPOUT
+    # mlp_dropout = hp.Choice("mlp_dropout", [0.1, 0.2])
 
-    for _ in range(dense):
-        model.add(Dense(lstm_units, activation="relu"))
+    # lr = hp.Choice("lr", [1e-3, 1e-4])
+    lr = LEARNING_RATE
 
-    model.add(Dense(len(FORECAST_DAYS)))
+    # -----------------------
+    # Input
+    # -----------------------
+    inputs = Input(shape=(WINDOW_LEN, len(input_cols)))
+
+    # -----------------------
+    # Embedding and Pos. Enc.
+    # -----------------------
+    emb_dim = len(input_cols) * 2  # simple + stable choice
+    feature_embedding = layers.Dense(emb_dim, activation="relu")(inputs)
+    embedding = feature_embedding + positional_encoding(WINDOW_LEN, emb_dim)[:, :WINDOW_LEN, :]
+    x = embedding
+
+
+    # -----------------------
+    # Transformer blocks
+    # -----------------------
+    for _ in range(num_blocks):
+        x = transformer_encoder(x, head_size, num_heads, ff_dim, dropout)
+
+    # -----------------------
+    # Head
+    # -----------------------
+    x = layers.GlobalAveragePooling1D()(x)
+
+    x = layers.Dense(mlp_units, activation="relu")(x)
+    x = layers.Dropout(mlp_dropout)(x)
+
+    outputs = layers.Dense(len(FORECAST_DAYS))(x)
+
+    model = Model(inputs, outputs)
 
     model.compile(
         optimizer=Adam(learning_rate=lr),
@@ -93,14 +170,16 @@ def model_builder(hp):
 
     return model
 
+
+
 early_stopping = EarlyStopping(
     monitor="val_loss",
-    patience=5,
+    patience=EARLY_STOPPING_PATIENCE,
     restore_best_weights=True
 )
 
-
 # ----------------------- DATA PREPARATION -----------------------
+
 
 with open(SPRING_LIST_FILE_TRAIN, 'r') as f:
     spring_ids_train = [line.strip() for line in f if line.strip()]
@@ -151,6 +230,7 @@ y_valid_all = np.concatenate(y_valid_all, axis=0)
 
 # ----------------------- TRAINING -----------------------
 
+    
 print("     Training...")
 
 tracker = EmissionsTracker(log_level="error")
@@ -176,6 +256,7 @@ tuner.search(
     verbose=1
 )
 
+
 model = tuner.get_best_models(1)[0]
 
 emissions_train = tracker.stop()
@@ -184,14 +265,12 @@ energy_kwh_train = tracker.final_emissions_data.energy_consumed
 model.save(os.path.join(LARGE_MODEL_DIR, f"{MODEL}_{experiment_timestamp}.keras"))
 
 best_hp = tuner.get_best_hyperparameters(1)[0]
-best_params_dict = {
-    "lstm_units": best_hp.get("lstm_units"),
-    "dropout": best_hp.get("dropout"),
-    "learning_rate": best_hp.get("lr"),
-    "n_dense_layers": best_hp.get("dense_layers"),
-}
+
 
 # ----------------------- INFERENCE -----------------------
+
+
+print("     Inference...")
 
 print("     Inference...")
 
@@ -277,10 +356,11 @@ for spring_id in spring_ids_all:
             "energy training [kWh]": energy_kwh_train,
             "emissions inference [kg CO₂]": emissions_inference,
             "energy inference [kWh]": energy_kwh_inference,
-            "lstm_units": best_params_dict["lstm_units"],
-            "dropout": best_params_dict["dropout"],
-            "learning_rate": best_params_dict["learning_rate"],
-            "n_dense_layers": best_params_dict["n_dense_layers"]
+            "head_size": best_hp.get("head_size"),
+            "num_heads": best_hp.get("num_heads"),
+            "ff_dim": best_hp.get("ff_dim"),
+            "num_transformer_blocks": best_hp.get("num_transformer_blocks"),
+            "mlp_units": best_hp.get("mlp_units")
         })
 
     results_df = pd.DataFrame(results)
