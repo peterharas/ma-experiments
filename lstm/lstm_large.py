@@ -75,7 +75,7 @@ LARGE_MODEL_DIR = os.path.join(MODELS_DIR, "large")
 os.makedirs(LARGE_MODEL_DIR, exist_ok=True)
 
 # MODEL_PATH = os.path.join(LARGE_MODEL_DIR, f"{MODEL}_{experiment_timestamp}.keras")
-MODEL_PATH = os.path.join(LARGE_MODEL_DIR, f"{MODEL}_{"20260501_192947"}.keras")
+MODEL_PATH = os.path.join(LARGE_MODEL_DIR, f"{MODEL}_20260501_192947.keras")
 
 def model_builder(hp):
     lstm_units = hp.Choice("lstm_units", [64, 96, 128])
