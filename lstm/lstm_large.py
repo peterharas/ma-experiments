@@ -274,6 +274,9 @@ for spring_id in spring_ids_all:
         plt.savefig(plot_path, dpi=150)
         plt.close()
 
+        if not 'best_params_dict' in globals() or not 'best_params_dict' in locals():
+            best_params_dict = {}
+
         results.append({
             "spring_id": spring_id,
             "spring_type": type_flag,
