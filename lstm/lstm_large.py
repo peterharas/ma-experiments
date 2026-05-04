@@ -21,6 +21,8 @@ from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping
 from keras.models import Sequential
 from keras.layers import LSTM, Dense
+from keras.saving import load_model
+
 
 print(tf.config.list_physical_devices('GPU'))
 
@@ -51,6 +53,7 @@ os.environ["TF_CUDNN_DETERMINISTIC"] = "1"
 experiment_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 MODEL = "LSTM_LARGE"
+LOAD_MODEL = True
 
 os.makedirs(RESULTS_DIR, exist_ok=True)
 RESULTS_FILENAME = f"{MODEL}_results_{experiment_timestamp}.csv"
@@ -70,6 +73,8 @@ LOSS = 'mae'
 
 LARGE_MODEL_DIR = os.path.join(MODELS_DIR, "large")
 os.makedirs(LARGE_MODEL_DIR, exist_ok=True)
+
+MODEL_PATH = os.path.join(LARGE_MODEL_DIR, f"{MODEL}_{experiment_timestamp}.keras")
 
 def model_builder(hp):
     lstm_units = hp.Choice("lstm_units", [64, 96, 128])
@@ -156,40 +161,43 @@ print("     Training...")
 tracker = EmissionsTracker(log_level="error")
 tracker.start()
 
-tuner = kt.Hyperband(
-    model_builder,
-    objective="val_loss",
-    max_epochs=EPOCHS,
-    directory="tuning",
-    project_name=f"{MODEL}_{experiment_timestamp}",
-    overwrite=True,
-    seed=SEED
-)
+if LOAD_MODEL:
+    model = load_model(MODEL_PATH)
+else:
+    tuner = kt.Hyperband(
+        model_builder,
+        objective="val_loss",
+        max_epochs=EPOCHS,
+        directory="tuning",
+        project_name=f"{MODEL}_{experiment_timestamp}",
+        overwrite=True,
+        seed=SEED
+    )
 
-tuner.search(
-    X_train_all, y_train_all,
-    validation_data=(X_valid_all, y_valid_all),
-    epochs=EPOCHS,
-    batch_size=BATCH_SIZE,
-    callbacks=[early_stopping],
-    shuffle=True,
-    verbose=1
-)
+    tuner.search(
+        X_train_all, y_train_all,
+        validation_data=(X_valid_all, y_valid_all),
+        epochs=EPOCHS,
+        batch_size=BATCH_SIZE,
+        callbacks=[early_stopping],
+        shuffle=True,
+        verbose=1
+    )
 
-model = tuner.get_best_models(1)[0]
+    model = tuner.get_best_models(1)[0]
 
-emissions_train = tracker.stop()
-energy_kwh_train = tracker.final_emissions_data.energy_consumed
+    emissions_train = tracker.stop()
+    energy_kwh_train = tracker.final_emissions_data.energy_consumed
 
-model.save(os.path.join(LARGE_MODEL_DIR, f"{MODEL}_{experiment_timestamp}.keras"))
+    model.save(MODEL_PATH)
 
-best_hp = tuner.get_best_hyperparameters(1)[0]
-best_params_dict = {
-    "lstm_units": best_hp.get("lstm_units"),
-    "dropout": best_hp.get("dropout"),
-    "learning_rate": best_hp.get("lr"),
-    "n_dense_layers": best_hp.get("dense_layers"),
-}
+    best_hp = tuner.get_best_hyperparameters(1)[0]
+    best_params_dict = {
+        "lstm_units": best_hp.get("lstm_units"),
+        "dropout": best_hp.get("dropout"),
+        "learning_rate": best_hp.get("lr"),
+        "n_dense_layers": best_hp.get("dense_layers"),
+    }
 
 # ----------------------- INFERENCE -----------------------
 
@@ -273,14 +281,14 @@ for spring_id in spring_ids_all:
             "mae": metrics["mae"],
             "rmse": metrics["rmse"],
             "smape": metrics["smape"],
-            "emissions training [kg CO₂]": emissions_train,
-            "energy training [kWh]": energy_kwh_train,
+            "emissions training [kg CO₂]": emissions_train if not LOAD_MODEL else None,
+            "energy training [kWh]": energy_kwh_train if not LOAD_MODEL else None,
             "emissions inference [kg CO₂]": emissions_inference,
             "energy inference [kWh]": energy_kwh_inference,
-            "lstm_units": best_params_dict["lstm_units"],
-            "dropout": best_params_dict["dropout"],
-            "learning_rate": best_params_dict["learning_rate"],
-            "n_dense_layers": best_params_dict["n_dense_layers"]
+            "lstm_units": best_params_dict.get("lstm_units", None),
+            "dropout": best_params_dict.get("dropout", None),
+            "learning_rate": best_params_dict.get("learning_rate", None),
+            "n_dense_layers": best_params_dict.get("n_dense_layers", None)
         })
 
     results_df = pd.DataFrame(results)
