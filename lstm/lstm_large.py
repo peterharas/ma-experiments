@@ -229,6 +229,7 @@ for spring_id in spring_ids_all:
         SCALER_Y_PATH = os.path.join(SRINGS_BASE_DIR, "mean_scale_y.pkl")
 
     test_df = pd.read_csv(TEST_PATH, parse_dates=['timestamp'])
+    input_cols = [c for c in test_df.columns if c not in ['timestamp']]
     X_test, y_test, ts_test  = create_sequences(test_df[input_cols], 
                                     test_df[TARGET_COL],
                                     test_df["timestamp"], 
