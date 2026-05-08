@@ -225,7 +225,8 @@ for spring_id in spring_ids_all:
         continue
 
     if not os.path.exists(SCALER_Y_PATH):
-        type_flag = "UNSEEN_MEANSCALING"
+        VALID_PATH = os.path.join(SPRING_DIR, f"{spring_id}_valid.csv")
+        type_flag = "SEEN_MEANSCALING" if os.path.exists(VALID_PATH) else "UNSEEN_MEANSCALING"
         SCALER_Y_PATH = os.path.join(SRINGS_BASE_DIR, "mean_scale_y.pkl")
 
     test_df = pd.read_csv(TEST_PATH, parse_dates=['timestamp'])
