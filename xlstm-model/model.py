@@ -3,10 +3,12 @@ import torch.nn as nn
 
 import sys
 
-from xLSTM import xLSTMBlockStack, xLSTMBlockStackConfig
-from xLSTM.blocks.mlstm.block import mLSTMBlockConfig
-from xLSTM.blocks.slstm.block import sLSTMBlockConfig
-from xLSTM.components.feedforward import FeedForwardConfig
+from xlstm import xLSTMBlockStack, xLSTMBlockStackConfig
+from xlstm.blocks.mlstm.block import mLSTMBlockConfig
+from xlstm.blocks.slstm.block import sLSTMBlockConfig
+from xlstm.components.feedforward import FeedForwardConfig
+from xlstm.blocks.mlstm.layer import mLSTMLayerConfig
+from xlstm.blocks.slstm.layer import sLSTMLayerConfig
 
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
@@ -25,25 +27,24 @@ class xLSTMForecaster(nn.Module):
 
         cfg = xLSTMBlockStackConfig(
             mlstm_block=mLSTMBlockConfig(
-                mlstm_dim=hidden_size,
-                num_heads=4
+                mlstm=mLSTMLayerConfig(
+                    embedding_dim=hidden_size,
+                    num_heads=2
+                )
             ),
 
             slstm_block=sLSTMBlockConfig(
-                slstm_dim=hidden_size,
-                num_heads=4
+                slstm=sLSTMLayerConfig(
+                    embedding_dim=hidden_size,
+                    num_heads=2
+                )
             ),
 
             context_length=WINDOW_LEN,
             num_blocks=num_blocks,
             embedding_dim=input_size,
 
-            slstm_at=[1],
-
-            feedforward=FeedForwardConfig(
-                proj_factor=1.3,
-                act_fn="gelu"
-            )
+            slstm_at=[1]
         )
 
         self.backbone = xLSTMBlockStack(cfg)
