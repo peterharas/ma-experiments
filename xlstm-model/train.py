@@ -11,6 +11,7 @@ def train_model(
     patience,
     model_save_path
 ):
+    print(f"Device: {device}")
 
     best_val_loss = float("inf")
     patience_counter = 0
