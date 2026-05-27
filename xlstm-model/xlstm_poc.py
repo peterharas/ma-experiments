@@ -112,7 +112,19 @@ for spring_id in spring_ids:
     
     print("     Training...")
     
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # Detect if CUDA is actually available and working
+    # torch.cuda.is_available() can return True even if CUDA is not properly initialized
+    cuda_available = False
+    if torch.cuda.is_available():
+        try:
+            # Try to allocate a small tensor on CUDA to verify it works
+            torch.zeros(1, device='cuda')
+            cuda_available = True
+        except RuntimeError:
+            cuda_available = False
+            print("    Warning: CUDA detected but not functional, falling back to CPU")
+    
+    device = torch.device("cuda" if cuda_available else "cpu")
 
     model = xLSTMForecaster(
         input_size=len(input_cols),
