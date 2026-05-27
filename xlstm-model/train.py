@@ -1,4 +1,5 @@
 import torch
+from tqdm import tqdm
 
 def train_model(
     model,
@@ -16,7 +17,7 @@ def train_model(
     best_val_loss = float("inf")
     patience_counter = 0
 
-    for epoch in range(epochs):
+    for epoch in tqdm(range(epochs)):
 
         # -------------------------
         # TRAINING
@@ -26,7 +27,9 @@ def train_model(
 
         train_loss = 0.0
 
-        for xb, yb in train_loader:
+        train_bar = tqdm(train_loader, desc=f"Train {epoch+1}/{epochs}")
+
+        for xb, yb in train_bar:
 
             xb = xb.to(device)
             yb = yb.to(device)
