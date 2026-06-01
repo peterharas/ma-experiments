@@ -21,6 +21,7 @@ class xLSTMForecaster(nn.Module):
         input_size,
         hidden_size,
         output_size,
+        dropout,
         num_blocks=2
     ):
         super().__init__()
@@ -29,6 +30,7 @@ class xLSTMForecaster(nn.Module):
             mlstm_block=mLSTMBlockConfig(
                 mlstm=mLSTMLayerConfig(
                     embedding_dim=hidden_size,
+                    dropout=dropout,
                     num_heads=2
                 )
             ),
@@ -36,6 +38,7 @@ class xLSTMForecaster(nn.Module):
             slstm_block=sLSTMBlockConfig(
                 slstm=sLSTMLayerConfig(
                     embedding_dim=hidden_size,
+                    dropout=dropout,
                     num_heads=2
                 )
             ),
