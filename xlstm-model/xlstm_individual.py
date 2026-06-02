@@ -1,5 +1,7 @@
+import pickle
 import os
 import random
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from datetime import datetime
@@ -41,8 +43,16 @@ BATCH_SIZE = 24
 EARLY_STOPPING_PATIENCE = 5
 EPOCHS = 100
 
+HYPERPARAM_FILE = os.path.join(RESULTS_DIR, "LSTM_results_20260429_093001.csv")
+hyperparam_df = pd.read_csv(HYPERPARAM_FILE)
+
 MODELS_DIR = os.path.join("lstm", "models")
 os.makedirs(MODELS_DIR, exist_ok=True)
+
+os.makedirs(RESULTS_DIR, exist_ok=True)
+RESULTS_FILENAME = f"{MODEL}_results_{experiment_timestamp}.csv"
+RESULTS_FILEPATH = os.path.join(RESULTS_DIR, RESULTS_FILENAME)
+results = []
 
 with open(SPRING_LIST_FILE, 'r') as f:
     spring_ids = [line.strip() for line in f if line.strip()]
@@ -119,7 +129,10 @@ for spring_id in spring_ids:
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # TODO: load LSTM_UNITS, LR, DROPOUT
+    hyperparam_row = hyperparam_df[hyperparam_df["spring_id"] == int(spring_id)].iloc[0]
+    LSTM_UNITS = hyperparam_row["lstm_units"]
+    DROPOUT = hyperparam_row["dropout"]
+    LR = hyperparam_row["learning_rate"]
 
     model = xLSTMForecaster(
         input_size=len(input_cols),
@@ -150,3 +163,77 @@ for spring_id in spring_ids:
         patience=EARLY_STOPPING_PATIENCE,
         model_save_path=MODEL_PATH
     )
+
+    emissions_train = tracker.stop()
+    energy_kwh_train = tracker.final_emissions_data.energy_consumed
+
+    print("     Inference...")
+    tracker = EmissionsTracker(log_level="error")
+    tracker.start()
+
+    model.load_state_dict(
+        torch.load(MODEL_PATH)
+    )
+
+    model.eval()   
+
+    with torch.no_grad():
+
+        y_pred = model(
+            X_test.to(device)
+        )
+
+    y_pred = y_pred.cpu().numpy()
+
+    emissions_inference = tracker.stop()
+    energy_kwh_inference = tracker.final_emissions_data.energy_consumed
+
+    with open(SCALER_Y_PATH, 'rb') as f:
+        y_scaler = pickle.load(f)
+
+    # Inverse transform to original scale and convert to m^3/s
+    y_test_orig = y_scaler.inverse_transform(y_test) * 0.001
+    y_pred_orig = y_scaler.inverse_transform(y_pred)  * 0.001
+
+    for i, d in enumerate(FORECAST_DAYS):
+        y_target_d = y_test_orig[:, i]
+        y_pred_d = y_pred_orig[:, i]
+        metrics = evaluate_forecast(y_target_d, y_pred_d)
+
+        plots_base_dir = os.path.join(RESULTS_PLOTS_DIR, spring_id)
+        os.makedirs(plots_base_dir, exist_ok=True)
+        plot_filename = f"{spring_id}_{MODEL}_{d}d_{experiment_timestamp}.png"
+        plot_path = os.path.join(plots_base_dir, plot_filename)
+
+        timestamps_d = ts_test[:, i]
+
+        plt.figure(figsize=(12, 4))
+        plt.plot(timestamps_d, y_test_orig[:, i], label="Observed", linewidth=1)
+        plt.plot(timestamps_d, y_pred_orig[:, i], label="Predicted", linewidth=1)
+        plt.title(f"{MODEL} {spring_id} – {d}-Day Ahead Forecast")
+        plt.xlabel("Time")
+        plt.ylabel("Discharge [m³/s]")
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(plot_path, dpi=150)
+        plt.close()
+
+        results.append({
+            "spring_id": spring_id,
+            "model": MODEL,
+            "horizon": d,
+            "nse": metrics["nse"],
+            "mae": metrics["mae"],
+            "rmse": metrics["rmse"],
+            "smape": metrics["smape"],
+            "emissions training [kg CO₂]": emissions_train,
+            "energy training [kWh]": energy_kwh_train,
+            "emissions inference [kg CO₂]": emissions_inference,
+            "energy inference [kWh]": energy_kwh_inference,
+            "lstm_units": LSTM_UNITS,
+            "dropout": DROPOUT,
+            "learning_rate": LR
+        })
+
+    results_df = pd.DataFrame(results)
+    results_df.to_csv(RESULTS_FILEPATH, index=False)
