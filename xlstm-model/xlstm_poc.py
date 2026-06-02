@@ -129,7 +129,8 @@ for spring_id in spring_ids:
     model = xLSTMForecaster(
         input_size=len(input_cols),
         hidden_size=LSTM_UNITS,
-        output_size=len(FORECAST_DAYS)
+        output_size=len(FORECAST_DAYS),
+        dropout=DROPOUT
     ).to(device)
 
     criterion = nn.L1Loss()
