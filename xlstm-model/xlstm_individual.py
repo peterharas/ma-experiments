@@ -46,7 +46,7 @@ EPOCHS = 100
 HYPERPARAM_FILE = os.path.join(RESULTS_DIR, "LSTM_results_20260429_093001.csv")
 hyperparam_df = pd.read_csv(HYPERPARAM_FILE)
 
-MODELS_DIR = os.path.join("lstm", "models")
+MODELS_DIR = os.path.join("xlstm", "models")
 os.makedirs(MODELS_DIR, exist_ok=True)
 
 os.makedirs(RESULTS_DIR, exist_ok=True)
