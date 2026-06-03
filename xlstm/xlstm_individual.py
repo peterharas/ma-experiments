@@ -58,7 +58,7 @@ with open(SPRING_LIST_FILE, 'r') as f:
     spring_ids = [line.strip() for line in f if line.strip()]
 
 # for dev purposes
-spring_ids = ["395103"]
+# spring_ids = ["395103"]
 
 for spring_id in spring_ids:
     print(f"Running {MODEL} for {spring_id}...")
@@ -187,6 +187,12 @@ for spring_id in spring_ids:
 
     emissions_inference = tracker.stop()
     energy_kwh_inference = tracker.final_emissions_data.energy_consumed
+
+    # Cleanup
+    del model
+    del optimizer
+
+    torch.cuda.empty_cache()
 
     with open(SCALER_Y_PATH, 'rb') as f:
         y_scaler = pickle.load(f)
