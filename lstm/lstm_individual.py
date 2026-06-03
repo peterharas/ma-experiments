@@ -67,9 +67,13 @@ LOSS = 'mae'
 
 
 def model_builder(hp):
+    # The number of LSTM cells/units in the LSTM layer 
     lstm_units = hp.Choice("lstm_units", [64, 96, 128])
+    # Dropout rate for input connections
     dropout = hp.Choice("dropout", [0.1, 0.2])
+    # Optimizer learning rate
     lr = hp.Choice("lr", [0.01, 0.001, 0.0001])
+    # Additional dense layer after the LSTM layer or not
     dense = hp.Choice("dense_layers", [0, 1])
 
     model = Sequential()
@@ -78,6 +82,7 @@ def model_builder(hp):
     for _ in range(dense):
         model.add(Dense(lstm_units, activation="relu"))
 
+    # Final dense layer
     model.add(Dense(len(FORECAST_DAYS)))
 
     model.compile(
