@@ -196,13 +196,20 @@ for spring_id in spring_ids:
 
     model.eval()   
 
+    test_loader = DataLoader(
+        TensorDataset(X_test, y_test),
+        batch_size=8,
+        shuffle=False
+    )
+
+    preds = []
+
     with torch.no_grad():
+        for xb, _ in test_loader:
+            xb = xb.to(device)
+            preds.append(model(xb).cpu())
 
-        y_pred = model(
-            X_test.to(device)
-        )
-
-    y_pred = y_pred.cpu().numpy()
+    y_pred = torch.cat(preds).numpy()
 
     emissions_inference = tracker.stop()
     energy_kwh_inference = tracker.final_emissions_data.energy_consumed
