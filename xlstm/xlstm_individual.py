@@ -180,6 +180,8 @@ for spring_id in spring_ids:
     emissions_train = tracker.stop()
     energy_kwh_train = tracker.final_emissions_data.energy_consumed
 
+    cleanup_torch()
+
     print("     Inference...")
     tracker = EmissionsTracker(log_level="error")
     tracker.start()
