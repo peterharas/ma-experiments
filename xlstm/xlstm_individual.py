@@ -150,7 +150,8 @@ for spring_id in spring_ids:
         input_size=len(input_cols),
         hidden_size=LSTM_UNITS,
         output_size=len(FORECAST_DAYS),
-        dropout=DROPOUT
+        dropout=DROPOUT,
+        dense_layers=1
     ).to(device)
 
     criterion = nn.L1Loss()

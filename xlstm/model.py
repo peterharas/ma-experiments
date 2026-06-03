@@ -22,9 +22,12 @@ class xLSTMForecaster(nn.Module):
         hidden_size,
         output_size,
         dropout,
+        dense_layers,
         num_blocks=2
     ):
         super().__init__()
+
+        self.input_proj = nn.Linear(input_size, hidden_size)
 
         cfg = xLSTMBlockStackConfig(
             mlstm_block=mLSTMBlockConfig(
@@ -45,29 +48,37 @@ class xLSTMForecaster(nn.Module):
 
             context_length=WINDOW_LEN,
             num_blocks=num_blocks,
-            embedding_dim=input_size,
+            embedding_dim=hidden_size,
 
             slstm_at=[1]
         )
 
         self.backbone = xLSTMBlockStack(cfg)
 
-        self.head = nn.Sequential(
-            nn.Linear(input_size, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, output_size)
-        )
+        dense_modules = []
+        for _ in range(dense_layers):
+            dense_modules.append(nn.Linear(hidden_size, hidden_size))
+            dense_modules.append(nn.ReLU())
+
+        self.dense_stack = nn.Sequential(*dense_modules)
+
+        self.output_layer = nn.Linear(hidden_size, output_size)
+
 
     def forward(self, x):
 
         # x shape:
         # [batch, seq_len, features]
 
+        x = self.input_proj(x)
+
         x = self.backbone(x)
 
         # take last timestep
         x = x[:, -1, :]
 
-        x = self.head(x)
+        x = self.dense_stack(x)
+
+        x = self.output_layer(x)
 
         return x
