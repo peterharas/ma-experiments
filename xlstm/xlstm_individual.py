@@ -1,3 +1,4 @@
+import gc
 import pickle
 import os
 import random
@@ -54,6 +55,15 @@ RESULTS_FILENAME = f"{MODEL}_results_{experiment_timestamp}.csv"
 RESULTS_FILEPATH = os.path.join(RESULTS_DIR, RESULTS_FILENAME)
 results = []
 
+def cleanup_torch():
+    gc.collect()
+
+    if torch.cuda.is_available():
+        torch.cuda.synchronize()
+        torch.cuda.empty_cache()
+        torch.cuda.ipc_collect()
+        torch.cuda.reset_peak_memory_stats()
+
 with open(SPRING_LIST_FILE, 'r') as f:
     spring_ids = [line.strip() for line in f if line.strip()]
 
@@ -62,6 +72,8 @@ with open(SPRING_LIST_FILE, 'r') as f:
 
 for spring_id in spring_ids:
     print(f"Running {MODEL} for {spring_id}...")
+
+    cleanup_torch()
 
     SPRING_DIR = os.path.join(SRINGS_BASE_DIR, spring_id)
     TRAIN_PATH = os.path.join(SPRING_DIR, f"{spring_id}_train.csv")
@@ -172,7 +184,7 @@ for spring_id in spring_ids:
     tracker.start()
 
     model.load_state_dict(
-        torch.load(MODEL_PATH)
+        torch.load(MODEL_PATH, map_location=device)
     )
 
     model.eval()   
@@ -188,11 +200,23 @@ for spring_id in spring_ids:
     emissions_inference = tracker.stop()
     energy_kwh_inference = tracker.final_emissions_data.energy_consumed
 
-    # Cleanup
+    # ------------------------------------------------------------------
+    # Cleanup all PyTorch objects associated with this spring
+    # ------------------------------------------------------------------
+
     del model
     del optimizer
-
-    torch.cuda.empty_cache()
+    del criterion
+    del train_loader
+    del valid_loader
+    del X_train
+    del y_train
+    del X_valid
+    del y_valid
+    del X_test
+    del y_test
+    del y_pred
+    cleanup_torch()
 
     with open(SCALER_Y_PATH, 'rb') as f:
         y_scaler = pickle.load(f)
