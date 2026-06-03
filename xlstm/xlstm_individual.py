@@ -200,23 +200,6 @@ for spring_id in spring_ids:
     emissions_inference = tracker.stop()
     energy_kwh_inference = tracker.final_emissions_data.energy_consumed
 
-    # ------------------------------------------------------------------
-    # Cleanup all PyTorch objects associated with this spring
-    # ------------------------------------------------------------------
-
-    del model
-    del optimizer
-    del criterion
-    del train_loader
-    del valid_loader
-    del X_train
-    del y_train
-    del X_valid
-    del y_valid
-    del X_test
-    del y_test
-    del y_pred
-    cleanup_torch()
 
     with open(SCALER_Y_PATH, 'rb') as f:
         y_scaler = pickle.load(f)
@@ -267,3 +250,21 @@ for spring_id in spring_ids:
 
     results_df = pd.DataFrame(results)
     results_df.to_csv(RESULTS_FILEPATH, index=False)
+
+    # ------------------------------------------------------------------
+    # Cleanup all PyTorch objects associated with this spring
+    # ------------------------------------------------------------------
+
+    del model
+    del optimizer
+    del criterion
+    del train_loader
+    del valid_loader
+    del X_train
+    del y_train
+    del X_valid
+    del y_valid
+    del X_test
+    del y_test
+    del y_pred
+    cleanup_torch()
