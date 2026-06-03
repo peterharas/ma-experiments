@@ -58,7 +58,7 @@ with open(SPRING_LIST_FILE, 'r') as f:
     spring_ids = [line.strip() for line in f if line.strip()]
 
 # for dev purposes
-# spring_ids = ["395012"]
+spring_ids = ["395103"]
 
 for spring_id in spring_ids:
     print(f"Running {MODEL} for {spring_id}...")
