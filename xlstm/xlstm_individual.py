@@ -180,6 +180,10 @@ for spring_id in spring_ids:
     emissions_train = tracker.stop()
     energy_kwh_train = tracker.final_emissions_data.energy_consumed
 
+    del train_loader, valid_loader
+    del X_train, X_valid, y_train, y_valid
+    del optimizer
+    del criterion
     cleanup_torch()
 
     print("     Inference...")
@@ -259,14 +263,6 @@ for spring_id in spring_ids:
     # ------------------------------------------------------------------
 
     del model
-    del optimizer
-    del criterion
-    del train_loader
-    del valid_loader
-    del X_train
-    del y_train
-    del X_valid
-    del y_valid
     del X_test
     del y_test
     del y_pred
