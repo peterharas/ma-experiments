@@ -41,11 +41,8 @@ experiment_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 # Global model params
 MODEL = "xLSTM"
 BATCH_SIZE = 24
-EARLY_STOPPING_PATIENCE = 5
+EARLY_STOPPING_PATIENCE = 3
 EPOCHS = 100
-
-HYPERPARAM_FILE = os.path.join(RESULTS_DIR, "LSTM_results_20260429_093001.csv")
-hyperparam_df = pd.read_csv(HYPERPARAM_FILE)
 
 MODELS_DIR = os.path.join("xlstm", "models")
 os.makedirs(MODELS_DIR, exist_ok=True)
@@ -68,7 +65,7 @@ with open(SPRING_LIST_FILE, 'r') as f:
     spring_ids = [line.strip() for line in f if line.strip()]
 
 # for dev purposes
-spring_ids = ["395038"]
+# spring_ids = ["395038"]
 
 for spring_id in spring_ids:
     print(f"Running {MODEL} for {spring_id}...")
@@ -140,19 +137,27 @@ for spring_id in spring_ids:
     tracker.start()
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    hyperparam_row = hyperparam_df[hyperparam_df["spring_id"] == int(spring_id)].iloc[0]
-    # LSTM_UNITS = hyperparam_row["lstm_units"]
-    # DROPOUT = hyperparam_row["dropout"]
-    # LR = hyperparam_row["learning_rate"]
-
-    LSTM_UNITS = 128
+    
+    # Hyperparams to be tuned
+    EMBEDDING_DIM = 128
     DROPOUT = 0.1
     LR = 0.001
 
+    # For the analogous LSTM, these hyperparams were tuned
+    # The number of LSTM cells/units in the LSTM layer, corresponds to EMBEDDING_DIM in xLSTM
+    # lstm_units = hp.Choice("lstm_units", [64, 96, 128])
+    # Dropout rate for input connections
+    # dropout = hp.Choice("dropout", [0.1, 0.2])
+    # Optimizer learning rate
+    # lr = hp.Choice("lr", [0.01, 0.001, 0.0001])
+
+    # Also to be tuned:
+    # slstm_at=[1]
+    # combinations: slstm first, slstm second, only slstm, only mlstm
+
     model = xLSTMForecaster(
         input_size=len(input_cols),
-        hidden_size=LSTM_UNITS,
+        hidden_size=EMBEDDING_DIM,
         output_size=len(FORECAST_DAYS),
         dropout=DROPOUT,
         dense_layers=1
@@ -263,17 +268,13 @@ for spring_id in spring_ids:
             "energy training [kWh]": energy_kwh_train,
             "emissions inference [kg CO₂]": emissions_inference,
             "energy inference [kWh]": energy_kwh_inference,
-            "lstm_units": LSTM_UNITS,
+            "lstm_units": EMBEDDING_DIM,
             "dropout": DROPOUT,
             "learning_rate": LR
         })
 
     results_df = pd.DataFrame(results)
     results_df.to_csv(RESULTS_FILEPATH, index=False)
-
-    # ------------------------------------------------------------------
-    # Cleanup all PyTorch objects associated with this spring
-    # ------------------------------------------------------------------
 
     del model
     del X_test
