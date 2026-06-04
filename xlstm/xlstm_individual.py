@@ -23,6 +23,8 @@ from torch.utils.data import TensorDataset, DataLoader
 from model import xLSTMForecaster
 from train import train_model
 
+from ray import tune
+from ray.tune.schedulers import ASHAScheduler
 
 SEED = 12019844
 os.environ["PYTHONHASHSEED"] = str(SEED)
@@ -65,7 +67,7 @@ with open(SPRING_LIST_FILE, 'r') as f:
     spring_ids = [line.strip() for line in f if line.strip()]
 
 # for dev purposes
-# spring_ids = ["395038"]
+spring_ids = ["395038"]
 
 for spring_id in spring_ids:
     print(f"Running {MODEL} for {spring_id}...")
@@ -131,50 +133,105 @@ for spring_id in spring_ids:
         shuffle=False
     )
 
+    def train_xlstm_tune(config):
+        criterion = nn.L1Loss()
+
+        model = xLSTMForecaster(
+            input_size=len(input_cols),
+            hidden_size=config["embedding_dim"],
+            output_size=len(FORECAST_DAYS),
+            dropout=config["dropout"],
+            dense_layers=1,
+            architecture=config["architecture"]
+        ).to(device)
+
+        optimizer = torch.optim.Adam(
+            model.parameters(),
+            lr=config["lr"]
+        )
+
+        best_val_loss = train_model(
+            model=model,
+            train_loader=train_loader,
+            valid_loader=valid_loader,
+            criterion=criterion,
+            optimizer=optimizer,
+            device=device,
+            epochs=config["epochs"],
+            patience=3
+        )
+
+        tune.report(val_loss=best_val_loss)
+
     print("     Training...")
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    search_space = {
+        "embedding_dim": tune.grid_search([64, 96, 128]),
+        "dropout": tune.grid_search([0.1, 0.2]),
+        "lr": tune.grid_search([1e-2, 1e-3, 1e-4]),
+        "architecture": tune.grid_search([
+            "slstm_first",
+            "slstm_second",
+            "only_slstm",
+            "only_mlstm"
+        ]),
+        "epochs": 100
+    }
+
+    scheduler = ASHAScheduler(
+        metric="val_loss",
+        mode="min",
+        max_t=100,
+        grace_period=10,
+        reduction_factor=3
+    )
+
+    tuner = tune.Tuner(
+        train_xlstm_tune,
+        tune_config=tune.TuneConfig(
+            metric="val_loss",
+            mode="min",
+            scheduler=scheduler,
+            num_samples=72
+        ),
+        param_space=search_space
+    )
+
+    # torch.autograd.set_detect_anomaly(True)
+
+    hyperparam_results = tuner.fit()
+
+    best_result = hyperparam_results.get_best_result(
+        metric="val_loss",
+        mode="min"
+    )
+    best_config = best_result.config
+    print(best_config)
 
     tracker = EmissionsTracker(log_level="error")
     tracker.start()
     
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
-    # Hyperparams to be tuned
-    EMBEDDING_DIM = 128
-    DROPOUT = 0.1
-    LR = 0.001
-
-    # For the analogous LSTM, these hyperparams were tuned
-    # The number of LSTM cells/units in the LSTM layer, corresponds to EMBEDDING_DIM in xLSTM
-    # lstm_units = hp.Choice("lstm_units", [64, 96, 128])
-    # Dropout rate for input connections
-    # dropout = hp.Choice("dropout", [0.1, 0.2])
-    # Optimizer learning rate
-    # lr = hp.Choice("lr", [0.01, 0.001, 0.0001])
-
-    # Also to be tuned:
-    # slstm_at=[1]
-    # combinations: slstm first, slstm second, only slstm, only mlstm
-
     model = xLSTMForecaster(
         input_size=len(input_cols),
-        hidden_size=EMBEDDING_DIM,
+        hidden_size=best_config["embedding_dim"],
         output_size=len(FORECAST_DAYS),
-        dropout=DROPOUT,
-        dense_layers=1
+        dropout=best_config["dropout"],
+        dense_layers=1,
+        architecture=best_config["architecture"]
     ).to(device)
 
     criterion = nn.L1Loss()
     optimizer = torch.optim.Adam(
         model.parameters(),
-        lr=LR
+        lr=best_config["lr"]
     )
 
     MODEL_PATH = os.path.join(
         SPRING_MODEL_DIR,
         f"{MODEL}_{spring_id}_{experiment_timestamp}.pt"
     )
-
-    torch.autograd.set_detect_anomaly(True)
 
     train_model(
         model=model,
@@ -201,9 +258,6 @@ for spring_id in spring_ids:
     tracker = EmissionsTracker(log_level="error")
     tracker.start()
 
-    model.load_state_dict(
-        torch.load(MODEL_PATH, map_location=device)
-    )
 
     model.eval()   
 
@@ -268,9 +322,10 @@ for spring_id in spring_ids:
             "energy training [kWh]": energy_kwh_train,
             "emissions inference [kg CO₂]": emissions_inference,
             "energy inference [kWh]": energy_kwh_inference,
-            "lstm_units": EMBEDDING_DIM,
-            "dropout": DROPOUT,
-            "learning_rate": LR
+            "embedding_dim": best_config["embedding_dim"],
+            "dropout": best_config["dropout"],
+            "learning_rate": best_config["lr"],
+            "architecture": best_config["architecture"]
         })
 
     results_df = pd.DataFrame(results)

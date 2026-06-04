@@ -1,6 +1,8 @@
 import torch
 from tqdm import tqdm
 
+from ray import tune
+
 def train_model(
     model,
     train_loader,
@@ -10,7 +12,7 @@ def train_model(
     device,
     epochs,
     patience,
-    model_save_path
+    model_save_path=None
 ):
     print(f"Device: {device}")
 
@@ -87,17 +89,22 @@ def train_model(
         # EARLY STOPPING
         # -------------------------
 
+        tune.report(
+            val_loss=val_loss,
+            epoch=epoch
+        )
+
         if val_loss < best_val_loss:
 
             best_val_loss = val_loss
             patience_counter = 0
 
-            torch.save(
-                model.state_dict(),
-                model_save_path
-            )
-
-            print("    Best model updated")
+            if model_save_path is not None:
+                torch.save(
+                    model.state_dict(),
+                    model_save_path
+                )
+                print("    Best model updated")
 
         else:
 
@@ -114,4 +121,4 @@ def train_model(
 
                 break
 
-    return model
+    return best_val_loss

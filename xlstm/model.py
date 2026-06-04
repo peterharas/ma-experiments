@@ -14,6 +14,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 from util.experiment_params import *
 
+
 class xLSTMForecaster(nn.Module):
 
     def __init__(
@@ -23,11 +24,28 @@ class xLSTMForecaster(nn.Module):
         output_size,
         dropout,
         dense_layers,
-        num_blocks=2
+        num_blocks=2,
+        architecture="slstm_second"
     ):
         super().__init__()
 
         self.input_proj = nn.Linear(input_size, hidden_size)
+
+        if architecture == "slstm_first":
+            num_blocks = 2
+            slstm_at = [0]
+
+        elif architecture == "slstm_second":
+            num_blocks = 2
+            slstm_at = [1]
+
+        elif architecture == "only_slstm":
+            num_blocks = 1
+            slstm_at = [0]
+
+        elif architecture == "only_mlstm":
+            num_blocks = 1
+            slstm_at = []      
 
         cfg = xLSTMBlockStackConfig(
             mlstm_block=mLSTMBlockConfig(
@@ -47,10 +65,9 @@ class xLSTMForecaster(nn.Module):
             ),
 
             context_length=WINDOW_LEN,
-            num_blocks=num_blocks,
             embedding_dim=hidden_size,
-
-            slstm_at=[1]
+            num_blocks=num_blocks,
+            slstm_at=slstm_at
         )
 
         self.backbone = xLSTMBlockStack(cfg)
