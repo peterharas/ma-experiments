@@ -68,7 +68,7 @@ with open(SPRING_LIST_FILE, 'r') as f:
     spring_ids = [line.strip() for line in f if line.strip()]
 
 # for dev purposes
-# spring_ids = ["395103"]
+spring_ids = ["395038"]
 
 for spring_id in spring_ids:
     print(f"Running {MODEL} for {spring_id}...")
@@ -142,9 +142,13 @@ for spring_id in spring_ids:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     hyperparam_row = hyperparam_df[hyperparam_df["spring_id"] == int(spring_id)].iloc[0]
-    LSTM_UNITS = hyperparam_row["lstm_units"]
-    DROPOUT = hyperparam_row["dropout"]
-    LR = hyperparam_row["learning_rate"]
+    # LSTM_UNITS = hyperparam_row["lstm_units"]
+    # DROPOUT = hyperparam_row["dropout"]
+    # LR = hyperparam_row["learning_rate"]
+
+    LSTM_UNITS = 128
+    DROPOUT = 0.1
+    LR = 0.001
 
     model = xLSTMForecaster(
         input_size=len(input_cols),
@@ -164,6 +168,8 @@ for spring_id in spring_ids:
         SPRING_MODEL_DIR,
         f"{MODEL}_{spring_id}_{experiment_timestamp}.pt"
     )
+
+    torch.autograd.set_detect_anomaly(True)
 
     train_model(
         model=model,
