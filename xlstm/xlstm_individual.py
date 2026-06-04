@@ -133,7 +133,7 @@ for spring_id in spring_ids:
         shuffle=False
     )
 
-    def train_xlstm_tune(config):
+    def train_xlstm_tune(config, train_loader=None, valid_loader=None, device=None):
         criterion = nn.L1Loss()
 
         model = xLSTMForecaster(
@@ -188,8 +188,15 @@ for spring_id in spring_ids:
         reduction_factor=3
     )
 
-    tuner = tune.Tuner(
+    trainable = tune.with_parameters(
         train_xlstm_tune,
+        train_loader=train_loader,
+        valid_loader=valid_loader,
+        device=device
+    )
+
+    tuner = tune.Tuner(
+        trainable,
         tune_config=tune.TuneConfig(
             metric="val_loss",
             mode="min",
