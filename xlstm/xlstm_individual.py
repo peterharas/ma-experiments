@@ -198,8 +198,6 @@ for spring_id in spring_ids:
     tuner = tune.Tuner(
         trainable,
         tune_config=tune.TuneConfig(
-            metric="val_loss",
-            mode="min",
             scheduler=scheduler,
             num_samples=72
         ),
