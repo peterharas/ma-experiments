@@ -52,7 +52,7 @@ SCALER_Y_PATH = os.path.join(SPRING_DIR, f"{spring_id}_scale_y.pkl")
 
 if not os.path.exists(TRAIN_PATH) or not os.path.exists(VALID_PATH) or not os.path.exists(TEST_PATH) or not os.path.exists(SCALER_Y_PATH):
     print(f"Skipping {spring_id} because of missing data")
-    exit
+    sys.exit()
 
 SPRING_MODEL_DIR = os.path.join(MODELS_DIR, spring_id)
 os.makedirs(SPRING_MODEL_DIR, exist_ok=True)
@@ -110,6 +110,16 @@ test_loader = DataLoader(
 )
 
 print("Tuning...")
+
+model = xLSTMForecaster(
+    input_size=len(input_cols),
+    hidden_size=128,
+    output_size=len(FORECAST_DAYS),
+    dropout=0.1,
+    architecture="slstm_first"
+)
+del model
+torch.cuda.empty_cache()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -170,7 +180,7 @@ trainable = tune.with_parameters(
 tuner = tune.Tuner(
     trainable,
     tune_config=tune.TuneConfig(
-        metric="loss",
+        metric="val_loss",
         mode="min",
         scheduler=scheduler
     ),
