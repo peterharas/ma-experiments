@@ -109,7 +109,8 @@ test_loader = DataLoader(
     shuffle=False
 )
 
-print("Tuning...")
+
+print("Warming up xLSTM CUDA build...")
 
 model = xLSTMForecaster(
     input_size=len(input_cols),
@@ -117,9 +118,16 @@ model = xLSTMForecaster(
     output_size=len(FORECAST_DAYS),
     dropout=0.1,
     architecture="slstm_first"
-).to("cuda:0")
+).to("cuda")
+
+dummy = torch.randn(2, WINDOW_LEN, len(input_cols), device="cuda")
+model(dummy)
+
+print("Warmup done")
 del model
 torch.cuda.empty_cache()
+
+print("Tuning...")
 
 config = {
     "embedding_dim": tune.grid_search([64, 96, 128]),
