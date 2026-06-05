@@ -121,8 +121,8 @@ config = {
     "input_size": len(input_cols),
     "output_size": len(FORECAST_DAYS)
 }
-
-def train(config, train_loader=None, valid_loader=None):
+# 1. Pass the raw tensors into the wrapper, NOT the loaders
+def train(config, X_t=None, y_t=None, X_v=None, y_v=None):
 
     print("CUDA available:", torch.cuda.is_available())
     print("Device count:", torch.cuda.device_count())
@@ -131,6 +131,19 @@ def train(config, train_loader=None, valid_loader=None):
     print("CUDA_VISIBLE_DEVICES:", os.environ.get("CUDA_VISIBLE_DEVICES"))
 
     device = torch.device("cuda:0")
+
+    # 2. Build the DataLoaders LOCALLY inside the worker
+    train_loader = DataLoader(
+        TensorDataset(X_t, y_t),
+        batch_size=BATCH_SIZE, 
+        shuffle=True
+    )
+    
+    valid_loader = DataLoader(
+        TensorDataset(X_v, y_v),
+        batch_size=BATCH_SIZE,
+        shuffle=False
+    )
 
     model = xLSTMForecaster(
         input_size=config["input_size"],
@@ -145,7 +158,7 @@ def train(config, train_loader=None, valid_loader=None):
 
     train_model(
         model=model,
-        train_loader=train_loader,
+        train_loader=train_loader, # Pass the locally built loaders
         valid_loader=valid_loader,
         criterion=criterion,
         optimizer=optimizer,
@@ -166,8 +179,10 @@ scheduler = ASHAScheduler(
 trainable = tune.with_resources(
     tune.with_parameters(
         train,
-        train_loader=train_loader,
-        valid_loader=valid_loader,
+        X_t=X_train,
+        y_t=y_train,
+        X_v=X_valid,
+        y_v=y_valid,
     ),
     resources={"cpu": 4, "gpu": 1}
 )
