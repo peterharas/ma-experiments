@@ -21,7 +21,6 @@ from train import train_model
 
 from ray import tune
 from ray.tune.schedulers import ASHAScheduler
-from functools import partial
 
 SEED = 12019844
 os.environ["PYTHONHASHSEED"] = str(SEED)
@@ -161,8 +160,15 @@ scheduler = ASHAScheduler(
     reduction_factor=2,
 )
 
+trainable = tune.with_parameters(
+    train,
+    train_loader=train_loader,
+    valid_loader=valid_loader,
+    device=device
+)
+
 tuner = tune.Tuner(
-    partial(train, config=config, train_loader=train_loader, valid_loader=valid_loader, device=device),
+    train,
     tune_config=tune.TuneConfig(
         metric="loss",
         mode="min",
