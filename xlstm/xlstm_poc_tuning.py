@@ -168,7 +168,7 @@ trainable = tune.with_parameters(
 )
 
 tuner = tune.Tuner(
-    train,
+    trainable,
     tune_config=tune.TuneConfig(
         metric="loss",
         mode="min",
