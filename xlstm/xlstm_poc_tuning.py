@@ -23,6 +23,13 @@ SEED = 12019844
 os.environ["PYTHONHASHSEED"] = str(SEED)
 random.seed(SEED)
 np.random.seed(SEED)
+torch.manual_seed(SEED)
+# Set seed for CUDA (if using GPUs)
+torch.cuda.manual_seed(SEED)
+torch.cuda.manual_seed_all(SEED)  # For multi-GPU setups
+# Ensure deterministic behavior for PyTorch operations
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 
 experiment_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
