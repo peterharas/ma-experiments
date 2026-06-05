@@ -1,8 +1,6 @@
 import torch
 from tqdm import tqdm
 
-from ray import tune
-
 def train_model(
     model,
     train_loader,
@@ -88,11 +86,6 @@ def train_model(
         # -------------------------
         # EARLY STOPPING
         # -------------------------
-
-        tune.report(
-            val_loss=val_loss,
-            epoch=epoch
-        )
 
         if val_loss < best_val_loss:
 
