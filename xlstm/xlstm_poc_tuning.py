@@ -115,8 +115,12 @@ config = {
     "embedding_dim": tune.grid_search([64, 96, 128]),
     "dropout": 0.1,
     "lr": tune.grid_search([1e-3, 1e-4]),
-    "architecture": "slstm_first",
-    "epochs": 100,
+    "architecture": tune.grid_search([
+        "slstm_first",
+        "slstm_second",
+        "only_slstm",
+        "only_mlstm"
+    ]),    "epochs": 100,
     "patience": 3,
     "input_size": len(input_cols),
     "output_size": len(FORECAST_DAYS)
