@@ -1,6 +1,6 @@
 import torch
 from tqdm import tqdm
-from ray import train as ray_train # Import modern Ray Train API
+from ray import tune
 
 def train_model(
     model,
@@ -68,11 +68,13 @@ def train_model(
         )
 
         if use_ray:
-            ray_train.report({
-                "val_loss": val_loss,
-                "train_loss": train_loss,
-                "epoch": epoch + 1
-            })
+            tune.report(
+                {
+                    "val_loss": val_loss,
+                    "train_loss": train_loss,
+                    "epoch": epoch + 1
+                }
+            )
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
