@@ -149,7 +149,8 @@ def train(config, train_loader=None, valid_loader=None):
         optimizer=optimizer,
         device=device,
         epochs=config["epochs"],
-        patience=config["patience"]
+        patience=config["patience"],
+        verbose=False
     )
 
     tune.report(val_loss=best_val_loss)

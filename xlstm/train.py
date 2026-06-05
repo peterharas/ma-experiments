@@ -10,7 +10,8 @@ def train_model(
     device,
     epochs,
     patience,
-    model_save_path=None
+    model_save_path=None,
+    verbose=True
 ):
     print(f"Device: {device}")
 
@@ -27,9 +28,9 @@ def train_model(
 
         train_loss = 0.0
 
-        train_bar = tqdm(train_loader, desc=f"Train {epoch+1}/{epochs}")
+        iterable = tqdm(train_loader, desc=f"Train {epoch+1}/{epochs}") if verbose else train_loader
 
-        for xb, yb in train_bar:
+        for xb, yb in iterable:
 
             xb = xb.to(device)
             yb = yb.to(device)
