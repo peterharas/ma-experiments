@@ -117,7 +117,9 @@ config = {
     "lr": tune.grid_search([1e-2, 1e-3, 1e-4]),
     "architecture": "slstm_first",
     "epochs": 100,
-    "patience": 3
+    "patience": 3,
+    "input_size": len(input_cols),
+    "output_size": len(FORECAST_DAYS)
 }
 
 def train(config, train_loader=None, valid_loader=None):
@@ -131,9 +133,9 @@ def train(config, train_loader=None, valid_loader=None):
     device = torch.device("cuda:0")
 
     model = xLSTMForecaster(
-        input_size=len(input_cols),
+        input_size=config["input_size"],
         hidden_size=config["embedding_dim"],
-        output_size=len(FORECAST_DAYS),
+        output_size=config["output_size"],
         dropout=config["dropout"],
         architecture=config["architecture"]
     ).to(device)
@@ -141,7 +143,7 @@ def train(config, train_loader=None, valid_loader=None):
     criterion = nn.L1Loss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])
 
-    best_val_loss = train_model(
+    train_model(
         model=model,
         train_loader=train_loader,
         valid_loader=valid_loader,
@@ -150,10 +152,9 @@ def train(config, train_loader=None, valid_loader=None):
         device=device,
         epochs=config["epochs"],
         patience=config["patience"],
+        use_ray=True,
         verbose=False
     )
-
-    tune.report(val_loss=best_val_loss)
 
 
 scheduler = ASHAScheduler(
