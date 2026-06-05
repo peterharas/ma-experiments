@@ -162,9 +162,7 @@ scheduler = ASHAScheduler(
 )
 
 tuner = tune.Tuner(
-    tune.with_resources(
-        partial(train, config=config, train_loader=train_loader, valid_loader=valid_loader, device=device)
-    ),
+    partial(train, config=config, train_loader=train_loader, valid_loader=valid_loader, device=device),
     tune_config=tune.TuneConfig(
         metric="loss",
         mode="min",
