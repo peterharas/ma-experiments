@@ -117,22 +117,15 @@ model = xLSTMForecaster(
     output_size=len(FORECAST_DAYS),
     dropout=0.1,
     architecture="slstm_first"
-)
+).to("cuda:0")
 del model
 torch.cuda.empty_cache()
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 config = {
     "embedding_dim": tune.grid_search([64, 96, 128]),
     "dropout": tune.grid_search([0.1, 0.2]),
     "lr": tune.grid_search([1e-2, 1e-3, 1e-4]),
-    "architecture": tune.grid_search([
-        "slstm_first",
-        "slstm_second",
-        "only_slstm",
-        "only_mlstm"
-    ]),
+    "architecture": "slstm_first",
     "epochs": 100,
     "patience": 3
 }
