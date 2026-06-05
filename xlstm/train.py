@@ -19,7 +19,7 @@ def train_model(
     best_val_loss = float("inf")
     patience_counter = 0
 
-    for epoch in epochs:
+    for epoch in range(epochs):
 
         # -------------------------
         # TRAINING
