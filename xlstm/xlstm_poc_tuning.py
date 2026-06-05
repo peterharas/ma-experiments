@@ -185,7 +185,7 @@ trainable = tune.with_resources(
         train_loader=train_loader,
         valid_loader=valid_loader,
     ),
-    resources={"gpu": 1}
+    resources={"cpu": 4, "gpu": 1}
 )
 
 tuner = tune.Tuner(
