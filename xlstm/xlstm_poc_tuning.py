@@ -47,7 +47,7 @@ TEST_PATH = os.path.join(SPRING_DIR, f"{spring_id}_test.csv")
 SCALER_Y_PATH = os.path.join(SPRING_DIR, f"{spring_id}_scale_y.pkl")
 
 if not os.path.exists(TRAIN_PATH) or not os.path.exists(VALID_PATH) or not os.path.exists(TEST_PATH) or not os.path.exists(SCALER_Y_PATH):
-    print(f"    Skipping {spring_id} because of missing data")
+    print(f"Skipping {spring_id} because of missing data")
     exit
 
 SPRING_MODEL_DIR = os.path.join(MODELS_DIR, spring_id)
@@ -57,7 +57,7 @@ train_df = pd.read_csv(TRAIN_PATH, parse_dates=['timestamp'])
 valid_df = pd.read_csv(VALID_PATH, parse_dates=['timestamp'])
 test_df = pd.read_csv(TEST_PATH, parse_dates=['timestamp'])
 
-print("     Creating sequences...")
+print("Creating sequences...")
 input_cols = [c for c in test_df.columns if c not in ['timestamp']]
 X_train, y_train, ts_train  = create_sequences(train_df[input_cols], 
                                     train_df[TARGET_COL],
@@ -105,7 +105,7 @@ test_loader = DataLoader(
 )
 
 
-print("     Training...")
+print("Training...")
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -133,7 +133,7 @@ train_model(
 )
 
 
-print("     Inference...")
+print("Inference...")
 
 model.load_state_dict(torch.load(MODEL_PATH))
 model.eval()   

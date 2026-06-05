@@ -19,7 +19,7 @@ def train_model(
     best_val_loss = float("inf")
     patience_counter = 0
 
-    for epoch in tqdm(range(epochs)):
+    for epoch in epochs:
 
         # -------------------------
         # TRAINING
