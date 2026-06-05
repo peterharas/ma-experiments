@@ -137,7 +137,15 @@ config = {
     "patience": 3
 }
 
-def train(config, train_loader=None, valid_loader=None, device=None):
+def train(config, train_loader=None, valid_loader=None):
+
+    print("CUDA available:", torch.cuda.is_available())
+    print("Device count:", torch.cuda.device_count())
+    print("Current device:", torch.cuda.current_device())
+    print("GPU name:", torch.cuda.get_device_name(0))
+    print("CUDA_VISIBLE_DEVICES:", os.environ.get("CUDA_VISIBLE_DEVICES"))
+
+    device = torch.device("cuda:0")
 
     model = xLSTMForecaster(
         input_size=len(input_cols),
@@ -170,11 +178,13 @@ scheduler = ASHAScheduler(
     reduction_factor=2,
 )
 
-trainable = tune.with_parameters(
-    train,
-    train_loader=train_loader,
-    valid_loader=valid_loader,
-    device=device
+trainable = tune.with_resources(
+    tune.with_parameters(
+        train,
+        train_loader=train_loader,
+        valid_loader=valid_loader,
+    ),
+    resources={"gpu": 1}
 )
 
 tuner = tune.Tuner(
@@ -182,7 +192,8 @@ tuner = tune.Tuner(
     tune_config=tune.TuneConfig(
         metric="val_loss",
         mode="min",
-        scheduler=scheduler
+        scheduler=scheduler,
+        max_concurrent_trials=1,  # important for debugging
     ),
     param_space=config,
 )
