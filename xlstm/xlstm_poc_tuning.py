@@ -113,8 +113,8 @@ print("Tuning...")
 
 config = {
     "embedding_dim": tune.grid_search([64, 96, 128]),
-    "dropout": tune.grid_search([0.1, 0.2]),
-    "lr": tune.grid_search([1e-2, 1e-3, 1e-4]),
+    "dropout": 0.1,
+    "lr": tune.grid_search([1e-3, 1e-4]),
     "architecture": "slstm_first",
     "epochs": 100,
     "patience": 3,
