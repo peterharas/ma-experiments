@@ -23,7 +23,7 @@ class xLSTMForecaster(nn.Module):
         hidden_size,
         output_size,
         dropout,
-        dense_layers,
+        dense_layers=1,
         num_blocks=2,
         architecture="slstm_second"
     ):
