@@ -40,7 +40,7 @@ os.makedirs(MODELS_DIR, exist_ok=True)
 
 spring_id = "395038"
 
-SPRING_DIR = os.path.join(SRINGS_BASE_DIR, spring_id)
+SPRING_DIR = os.path.join(SPRINGS_BASE_DIR, spring_id)
 TRAIN_PATH = os.path.join(SPRING_DIR, f"{spring_id}_train.csv")
 VALID_PATH = os.path.join(SPRING_DIR, f"{spring_id}_valid.csv")
 TEST_PATH = os.path.join(SPRING_DIR, f"{spring_id}_test.csv")

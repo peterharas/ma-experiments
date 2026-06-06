@@ -26,7 +26,7 @@ with open(SPRING_LIST_FILE, 'r') as f:
 for spring_id in spring_ids:
     print(f"Calculating baseline for {spring_id}...")
 
-    SPRING_DIR = os.path.join(SRINGS_BASE_DIR, spring_id)
+    SPRING_DIR = os.path.join(SPRINGS_BASE_DIR, spring_id)
     TEST_PATH = os.path.join(SPRING_DIR, f"{spring_id}_test.csv")
     SCALER_Y_PATH = os.path.join(SPRING_DIR, f"{spring_id}_scale_y.pkl")
     

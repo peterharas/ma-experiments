@@ -190,7 +190,7 @@ X_valid_all, y_valid_all = [], []
 
 for spring_id in spring_ids_train:
     print(f"    Creating sequences for {spring_id}...")
-    SPRING_DIR = os.path.join(SRINGS_BASE_DIR, spring_id)
+    SPRING_DIR = os.path.join(SPRINGS_BASE_DIR, spring_id)
     TRAIN_PATH = os.path.join(SPRING_DIR, f"{spring_id}_train.csv")
     VALID_PATH = os.path.join(SPRING_DIR, f"{spring_id}_valid.csv")
     
@@ -285,7 +285,7 @@ for spring_id in spring_ids_all:
 
     type_flag = "UNSEEN" if spring_id in spring_ids_unseen else "TRAIN"
 
-    SPRING_DIR = os.path.join(SRINGS_BASE_DIR, spring_id)
+    SPRING_DIR = os.path.join(SPRINGS_BASE_DIR, spring_id)
 
     TEST_PATH = os.path.join(SPRING_DIR, f"{spring_id}_test.csv")
     SCALER_Y_PATH = os.path.join(SPRING_DIR, f"{spring_id}_scale_y.pkl")
@@ -297,7 +297,7 @@ for spring_id in spring_ids_all:
     if not os.path.exists(SCALER_Y_PATH):
         VALID_PATH = os.path.join(SPRING_DIR, f"{spring_id}_valid.csv")
         type_flag = "SEEN_MEANSCALING" if os.path.exists(VALID_PATH) else "UNSEEN_MEANSCALING"
-        SCALER_Y_PATH = os.path.join(SRINGS_BASE_DIR, "mean_scale_y.pkl")
+        SCALER_Y_PATH = os.path.join(SPRINGS_BASE_DIR, "mean_scale_y.pkl")
 
     test_df = pd.read_csv(TEST_PATH, parse_dates=['timestamp'])
     X_test, y_test, ts_test  = create_sequences(test_df[input_cols], 
