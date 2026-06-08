@@ -58,6 +58,20 @@ with open(SPRING_LIST_FILE, 'r') as f:
 # for dev purposes
 # spring_ids = ["395038"]
 
+spring_ids.remove("395012")
+spring_ids.remove("395038")
+spring_ids.remove("395053")
+spring_ids.remove("395079")
+spring_ids.remove("395103")
+spring_ids.remove("395111")
+spring_ids.remove("395137")
+spring_ids.remove("395145")
+spring_ids.remove("395210")
+spring_ids.remove("395244")
+spring_ids.remove("395251")
+spring_ids.remove("395285")
+
+
 for spring_id in spring_ids:
     print(f"Running {MODEL} for {spring_id}...")
 
@@ -69,7 +83,7 @@ for spring_id in spring_ids:
 
     if not os.path.exists(TRAIN_PATH) or not os.path.exists(VALID_PATH) or not os.path.exists(TEST_PATH) or not os.path.exists(SCALER_Y_PATH):
         print(f"Skipping {spring_id} because of missing data")
-        sys.exit()
+        continue
 
     SPRING_MODEL_DIR = os.path.join(MODELS_DIR, spring_id)
     os.makedirs(SPRING_MODEL_DIR, exist_ok=True)
