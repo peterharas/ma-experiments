@@ -310,7 +310,10 @@ for spring_id in spring_ids_all:
                                     test_df[TARGET_COL],
                                     test_df["timestamp"], 
                                     WINDOW_LEN, 
-                                    FORECAST_HS)   
+                                    FORECAST_HS)
+    
+    X_test = torch.tensor(X_test, dtype=torch.float32)
+    y_test = torch.tensor(y_test, dtype=torch.float32)
 
     test_loader = DataLoader(
         TensorDataset(X_test, y_test),
