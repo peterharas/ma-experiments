@@ -1,16 +1,20 @@
 import os
 from ray import tune
 
-# Point this directly to the folder containing the tuner.pkl
+# Point this to your specific experiment folder
 experiment_path = os.path.expanduser("~/ray_results/train_xlstm_2026-06-12_06-59-35")
 
-print("Restoring Tuner state...")
-tuner = tune.Tuner.restore(experiment_path)
+# 1. Create a totally empty fake function to satisfy Ray's API
+def dummy_trainable(config):
+    pass
 
-# Fetch all results from the restored experiment
+print("Restoring Tuner state from tuner.pkl...")
+
+# 2. Pass the dummy function as the missing positional argument!
+tuner = tune.Tuner.restore(experiment_path, dummy_trainable)
+
+# 3. Extract the results
 results = tuner.get_results()
-
-# Extract the best one based on your metric
 best_result = results.get_best_result(metric="val_loss", mode="min")
 
 print("\n--- RECOVERED BEST CONFIG ---")
