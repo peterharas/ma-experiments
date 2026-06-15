@@ -1,0 +1,43 @@
+python -c '
+import json
+import glob
+
+folders = glob.glob("train_xlstm_2026-06-12_06-59-35/*/")
+best_loss = float("inf")
+best_config = None
+
+for f in folders:
+    result_path = f + "result.json"
+    try:
+        with open(result_path, "r") as file:
+            for line in file:
+                data = json.loads(line)
+                if "val_loss" in data and data["val_loss"] < best_loss:
+                    best_loss = data["val_loss"]
+                    best_config = data["config"]
+    except FileNotFoundError:
+        continue
+
+print("\n--- RECOVERED BEST CONFIG ---")
+print(f"Best Val Loss: {best_loss}")
+print(json.dumps(best_config, indent=4))
+print("-----------------------------\n")
+'
+
+
+
+# this was the output:
+
+--- RECOVERED BEST CONFIG ---
+Best Val Loss: 0.02292843237609273
+{
+    "embedding_dim": 96,
+    "dropout": 0.1,
+    "lr": 0.0001,
+    "architecture": "slstm_first",
+    "epochs": 100,
+    "patience": 3,
+    "input_size": 14,
+    "output_size": 4
+}
+-----------------------------
