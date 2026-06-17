@@ -14,6 +14,7 @@ df_lstm = pd.read_csv('results/LSTM_results_20260429_093001.csv')
 
 # 2. Combine the datasets
 df_combined = pd.concat([df_xlstm, df_lstm], ignore_index=True)
+df_combined['model'] = pd.Categorical(df_combined['model'], categories=['xLSTM', 'LSTM'], ordered=True)
 
 # 3. Define the metrics we want to analyze
 metrics = ['nse', 'mae', 'rmse', 'smape']
@@ -23,10 +24,12 @@ summary_stats = df_combined.groupby(['horizon', 'model'])[metrics].agg(['mean', 
 
 print("Summary Statistics:")
 print(summary_stats.to_string())
+print(summary_stats.to_latex(index=False, float_format="%.3f"))
 
 # 5. Create Boxplots
 # ---> NEW: Set figsize to exact A4 landscape dimensions in inches
 fig, axes = plt.subplots(2, 2, figsize=(11.69, 8.27))
+
 axes = axes.flatten()
 
 for i, metric in enumerate(metrics):
@@ -40,8 +43,8 @@ for i, metric in enumerate(metrics):
         gap=0.15
     )
     
-    # ---> NEW: Explicitly set font sizes for print legibility
-    axes[i].set_title(f'xLSTM vs LSTM: {metric.upper()} metric, spring-individual models', fontsize=14, pad=10)
+    # The subplot title line has been removed. 
+    # The y-axis label below is sufficient to identify the metric for each subplot.
     axes[i].set_xlabel('Forecast horizon in days', fontsize=12)
     axes[i].set_ylabel(metric.upper(), fontsize=12)
     
@@ -52,7 +55,8 @@ for i, metric in enumerate(metrics):
     axes[i].legend(loc='upper right', fontsize=11, title_fontsize=12)
 
 # Adjust spacing so titles and labels don't overlap
-plt.tight_layout()
+# ---> NEW: Added the rect parameter to leave room for the suptitle at the top
+plt.tight_layout(rect=[0, 0, 1, 0.96])
 
 # Save and show the plot (dpi=300 is perfect for high-quality A4 printing)
 plt.savefig(os.path.join('evaluation', 'xlstm_lstm_boxplots_individual.png'), dpi=300, bbox_inches='tight')
