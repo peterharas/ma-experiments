@@ -1,0 +1,4 @@
+sky blue (LSTM): #56B4E9
+deep marine (xLSTM): #0072B2
+golden orange (Transformer): #E69F00
+burnt vermilion (TFT): #D55E00
