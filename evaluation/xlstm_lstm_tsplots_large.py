@@ -53,7 +53,7 @@ for ax, h in zip(axes, horizons):
     ax.grid(True, linestyle='--', alpha=0.6)
 
 # Formatting the shared x-axis (only applies to the bottom plot)
-axes[-1].set_xlabel('Spring ID')
+axes[-1].set_xlabel('Spring ID', fontsize=12)
 plt.xticks(rotation=45, ha='right', rotation_mode='anchor')
 
 plt.tight_layout()
