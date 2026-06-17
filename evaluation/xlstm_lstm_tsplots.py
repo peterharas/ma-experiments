@@ -1,5 +1,12 @@
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
+
+# Custom colors
+my_colors = {
+    'LSTM': '#56B4E9',   # Sky Blue
+    'xLSTM': '#0072B2',  # Deep Marine    
+}
 
 # 1. Load the data
 file_xlstm = 'results/xLSTM_results_20260608_090620.csv'
@@ -19,30 +26,36 @@ df_merged = pd.merge(
 # 3. Sort the data by spring_id so the lines plot cleanly from left to right
 df_merged = df_merged.sort_values(by=['spring_id'])
 
-# 4. Convert spring_id to string so matplotlib treats it as categorical labels, not numbers
+# 4. Convert spring_id to string so matplotlib treats it as categorical labels
 df_merged['spring_id_str'] = df_merged['spring_id'].astype(str)
 
-# 5. Loop through each horizon and create a separate plot
-for h in [1, 2, 3, 4]:
+# Define horizons to iterate over
+horizons = [1, 2, 3, 4]
+
+# 5. Create subplots (stacked vertically, sharing the x-axis)
+fig, axes = plt.subplots(nrows=len(horizons), ncols=1, figsize=(11.69, 8.27), sharex=True)
+
+# Loop through each horizon and its corresponding axis
+for ax, h in zip(axes, horizons):
     # Filter data for the current horizon
     df_h = df_merged[df_merged['horizon'] == h]
     
-    # Create the plot
-    plt.figure(figsize=(12, 5))
+    # Plot LSTM and xLSTM lines using custom colors
+    ax.plot(df_h['spring_id_str'], df_h['nse_lstm'], marker='o', 
+            color=my_colors['LSTM'], label='LSTM', alpha=0.8)
+    ax.plot(df_h['spring_id_str'], df_h['nse_xlstm'], marker='s', 
+            color=my_colors['xLSTM'], label='xLSTM', alpha=0.8)
     
-    # Plot LSTM and xLSTM lines
-    plt.plot(df_h['spring_id_str'], df_h['nse_lstm'], marker='o', label='LSTM', alpha=0.8)
-    plt.plot(df_h['spring_id_str'], df_h['nse_xlstm'], marker='s', label='xLSTM', alpha=0.8)
-    
-    # Formatting
-    plt.xlabel('Spring ID')
-    plt.ylabel('NSE')
-    plt.title(f'NSE Comparison: LSTM vs xLSTM (Horizon {h})')
-    plt.legend()
-    plt.grid(True, linestyle='--', alpha=0.6)
-    
-    # Rotate x-axis labels if there are many springs
-    plt.xticks(rotation=45, ha='right')
-    
-    plt.tight_layout()
-    plt.show()
+    # Formatting for each individual subplot
+    ax.set_ylabel('NSE')
+    ax.set_title(f'NSE Comparison: LSTM vs xLSTM individual spring models (Horizon {h})')
+    ax.legend(loc='lower right')
+    ax.grid(True, linestyle='--', alpha=0.6)
+
+# Formatting the shared x-axis (only applies to the bottom plot)
+axes[-1].set_xlabel('Spring ID')
+plt.xticks(rotation=45, ha='right', rotation_mode='anchor')
+
+plt.tight_layout()
+plt.savefig(os.path.join('evaluation', 'xlstm_lstm_linecharts_individual.png'), dpi=300, bbox_inches='tight')
+plt.show()
