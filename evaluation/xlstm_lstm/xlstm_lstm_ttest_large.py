@@ -3,8 +3,8 @@ import numpy as np
 import scipy.stats as stats
 
 # 1. Load the datasets
-df_xlstm = pd.read_csv('results/xLSTM_results_20260608_090620.csv')
-df_lstm = pd.read_csv('results/LSTM_results_20260429_093001.csv')
+df_xlstm = pd.read_csv('results/xLSTM_LARGE_results_20260612_065528.csv')
+df_lstm = pd.read_csv('results/LSTM_LARGE_results_20260504_063436.csv')
 
 # 2. Extract only necessary columns to avoid clutter
 df_xlstm_sub = df_xlstm[['spring_id', 'horizon', 'nse']]
@@ -59,7 +59,7 @@ for h in horizons:
         
         print("--- Paired T-Test Results ---")
         print(f"t-statistic: {t_stat:.4f}")
-        print(f"p-value:     {t_p:.5f}")
+        print(f"p-value:     {t_p:.10f}")
         
     else:
         print("Result: Differences are NOT Normally Distributed (Reject H0).")
@@ -71,7 +71,7 @@ for h in horizons:
         
         print("--- Wilcoxon Signed-Rank Test Results ---")
         print(f"w-statistic: {w_stat:.4f}")
-        print(f"p-value:     {w_p:.5f}")
+        print(f"p-value:     {w_p:.10f}")
 
     # Determine significance (assuming alpha = 0.05)
     final_p = t_p if shapiro_p > 0.05 else w_p

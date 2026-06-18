@@ -1,0 +1,217 @@
+I conducted an experiment where I did time series forecasting for karst spring discharge with the horizons of 1, 2, 3, and 4 days. I compared a baseline state-of-the-art LSTM to an xLSTM, which is my research novelty.
+
+There are two types of experiments: one type (called individual), where I train the models on data of a single spring and evaluate on that spring. The second type, referred to as "large" or as I want it in my text, "generalised model", used multiple springs for training, and it was evaluated on both the training springs as well as a set of unseen springs. 
+
+The code for the boxplots is in the attachments. I also conducted some statistical tests, here are the results:
+
+individual:
+
+========================================
+HORIZON 1
+========================================
+--- Assumption Check: Shapiro-Wilk Test for Normality ---
+Test Statistic: 0.6964, p-value: 0.0000003274
+Result: Differences are NOT Normally Distributed (Reject H0).
+Action: Assumption violated. Falling back to Wilcoxon signed-rank test.
+
+--- Wilcoxon Signed-Rank Test Results ---
+w-statistic: 91.0000
+p-value:     0.00011
+
+Conclusion: There is a STATISTICALLY SIGNIFICANT difference between xLSTM and LSTM.
+
+========================================
+HORIZON 2
+========================================
+--- Assumption Check: Shapiro-Wilk Test for Normality ---
+Test Statistic: 0.7593, p-value: 0.0000035760
+Result: Differences are NOT Normally Distributed (Reject H0).
+Action: Assumption violated. Falling back to Wilcoxon signed-rank test.
+
+--- Wilcoxon Signed-Rank Test Results ---
+w-statistic: 162.0000
+p-value:     0.01121
+
+Conclusion: There is a STATISTICALLY SIGNIFICANT difference between xLSTM and LSTM.
+
+========================================
+HORIZON 3
+========================================
+--- Assumption Check: Shapiro-Wilk Test for Normality ---
+Test Statistic: 0.8535, p-value: 0.0002764406
+Result: Differences are NOT Normally Distributed (Reject H0).
+Action: Assumption violated. Falling back to Wilcoxon signed-rank test.
+
+--- Wilcoxon Signed-Rank Test Results ---
+w-statistic: 199.0000
+p-value:     0.05787
+
+Conclusion: NO statistically significant difference between the models.
+
+========================================
+HORIZON 4
+========================================
+--- Assumption Check: Shapiro-Wilk Test for Normality ---
+Test Statistic: 0.8936, p-value: 0.0026698943
+Result: Differences are NOT Normally Distributed (Reject H0).
+Action: Assumption violated. Falling back to Wilcoxon signed-rank test.
+
+--- Wilcoxon Signed-Rank Test Results ---
+w-statistic: 210.0000
+p-value:     0.08707
+
+Conclusion: NO statistically significant difference between the models.
+
+
+large:
+
+========================================
+HORIZON 1
+========================================
+--- Assumption Check: Shapiro-Wilk Test for Normality ---
+Test Statistic: 0.3326, p-value: 0.00000
+Result: Differences are NOT Normally Distributed (Reject H0).
+Action: Assumption violated. Falling back to Wilcoxon signed-rank test.
+
+--- Wilcoxon Signed-Rank Test Results ---
+w-statistic: 72.0000
+p-value:     0.0000012819
+
+Conclusion: There is a STATISTICALLY SIGNIFICANT difference between xLSTM and LSTM.
+
+========================================
+HORIZON 2
+========================================
+--- Assumption Check: Shapiro-Wilk Test for Normality ---
+Test Statistic: 0.3056, p-value: 0.00000
+Result: Differences are NOT Normally Distributed (Reject H0).
+Action: Assumption violated. Falling back to Wilcoxon signed-rank test.
+
+--- Wilcoxon Signed-Rank Test Results ---
+w-statistic: 64.0000
+p-value:     0.0000005618
+
+Conclusion: There is a STATISTICALLY SIGNIFICANT difference between xLSTM and LSTM.
+
+========================================
+HORIZON 3
+========================================
+--- Assumption Check: Shapiro-Wilk Test for Normality ---
+Test Statistic: 0.2931, p-value: 0.00000
+Result: Differences are NOT Normally Distributed (Reject H0).
+Action: Assumption violated. Falling back to Wilcoxon signed-rank test.
+
+--- Wilcoxon Signed-Rank Test Results ---
+w-statistic: 35.0000
+p-value:     0.0000000157
+
+Conclusion: There is a STATISTICALLY SIGNIFICANT difference between xLSTM and LSTM.
+
+========================================
+HORIZON 4
+========================================
+--- Assumption Check: Shapiro-Wilk Test for Normality ---
+Test Statistic: 0.2891, p-value: 0.00000
+Result: Differences are NOT Normally Distributed (Reject H0).
+Action: Assumption violated. Falling back to Wilcoxon signed-rank test.
+
+--- Wilcoxon Signed-Rank Test Results ---
+w-statistic: 46.0000
+p-value:     0.0000000696
+
+Conclusion: There is a STATISTICALLY SIGNIFICANT difference between xLSTM and LSTM.
+
+
+I have also counted how many times the xLSTM was better regarding the NSE:
+
+individual:
+
+(venv) ➜  ma-experiments git:(main) ✗ /Users/peter/dev/ma-experiments/venv/bin/python /Users/peter/dev/ma-experiments/evaluation/xlstm_lstm/xlstm_lstm_count_nse.py
+Number of springs where each model performs better (based on NSE):
+ horizon  xLSTM_better  LSTM_better  Tie
+       1            27            8    0
+       2            24           11    0
+       3            22           13    0
+       4            23           12    0
+
+
+large:
+
+
+(venv) ➜  ma-experiments git:(main) ✗ /Users/peter/dev/ma-experiments/venv/bin/python /Users/peter/dev/ma-experiments/evaluation/xlstm_lstm/xlstm_lstm_count_nse_large.py
+Number of springs where each model performs better (based on NSE):
+ horizon  xLSTM_better  LSTM_better  Tie
+       1            36            3    0
+       2            37            2    0
+       3            36            3    0
+       4            35            4    0
+
+
+
+This is the skeleton for my results sections. Please add a textual description to accompany the boxplots and the tables. 
+
+Use the results from the tables. 
+
+
+\section{Evaluation of Novel Architectures: xLSTM and TFT}
+
+\subsection{xLSTM vs LSTM}
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[scale=0.5]{graphics/xlstm_lstm_boxplots_individual.png}}
+\caption{xLSTM vs LSTM individual boxplot}
+\label{fig:xlstm_lstm_boxplots_individual}
+\end{figure}
+
+\begin{table}[htpb]
+\centering
+\caption{xLSTM vs LSTM individual boxplot}
+\label{tab:xlstm_lstm_boxplots_individual}
+\resizebox{\textwidth}{!}{ % Uncomment this and the closing brace below if the table is still too wide
+\begin{tabular}{rlrrrrrrrrrrrr}
+\toprule
+Horizon & Model & \multicolumn{3}{r}{NSE} & \multicolumn{3}{r}{MAE} & \multicolumn{3}{r}{RMSE} & \multicolumn{3}{r}{sMAPE} \\
+ &  & Mean & Median & Std & Mean & Median & Std & Mean & Median & Std & Mean & Median & Std \\
+\midrule
+1 & xLSTM & \textbf{0.761} & \textbf{0.905} & 0.282 & \textbf{0.120} & \textbf{0.010} & 0.195 & \textbf{0.289} & \textbf{0.019} & 0.465 & \textbf{18.817} & \textbf{7.702} & 23.675 \\
+1 & LSTM & 0.716 & 0.837 & 0.279 & 0.126 & 0.013 & 0.201 & 0.295 & 0.027 & 0.470 & 20.531 & 10.913 & 23.420 \\
+2 & xLSTM & \textbf{0.672} & \textbf{0.814} & 0.328 & \textbf{0.152} & \textbf{0.016} & 0.248 & 0.336 & \textbf{0.031} & 0.539 & \textbf{23.332} & \textbf{11.148} & 26.885 \\
+2 & LSTM & 0.638 & 0.780 & 0.319 & 0.153 & 0.017 & 0.246 & \textbf{0.334} & \textbf{0.031} & 0.529 & 23.958 & 12.127 & 25.329 \\
+3 & xLSTM & \textbf{0.620} & \textbf{0.751} & 0.342 & 0.168 & \textbf{0.021} & 0.273 & 0.357 & \textbf{0.035} & 0.573 & 25.558 & \textbf{13.830} & 27.984 \\
+3 & LSTM & 0.591 & 0.724 & 0.333 & \textbf{0.165} & 0.022 & 0.261 & \textbf{0.348} & 0.038 & 0.545 & \textbf{25.546} & 13.892 & 26.214 \\
+4 & xLSTM & \textbf{0.579} & 0.687 & 0.349 & 0.178 & \textbf{0.025} & 0.290 & 0.369 & \textbf{0.040} & 0.593 & 27.759 & 16.650 & 28.885 \\
+4 & LSTM & 0.559 & \textbf{0.688} & 0.336 & \textbf{0.173} & \textbf{0.025} & 0.273 & \textbf{0.357} & 0.044 & 0.558 & \textbf{27.497} & \textbf{15.760} & 27.464 \\
+\bottomrule
+\end{tabular}
+} % Uncomment if using \resizebox
+\end{table}
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[scale=0.5]{graphics/xlstm_lstm_boxplots_large_nooutliers.png}}
+\caption{xLSTM vs LSTM large boxplot}
+\label{fig:xlstm_lstm_boxplots_large_nooutliers}
+\end{figure}
+
+
+\begin{table}[htpb]
+\centering
+\caption{xLSTM vs LSTM large boxplot}
+\label{tab:xlstm_lstm_boxplots_large}
+\resizebox{\textwidth}{!}{ % Uncomment this and the closing brace below if the table is still too wide
+\begin{tabular}{rlrrrrrrrrrrrr}
+\toprule
+Horizon & Model & \multicolumn{3}{r}{NSE} & \multicolumn{3}{r}{MAE} & \multicolumn{3}{r}{RMSE} & \multicolumn{3}{r}{sMAPE} \\
+ &  & Mean & Median & Std & Mean & Median & Std & Mean & Median & Std & Mean & Median & Std \\
+\midrule
+1 & xLSTM & \textbf{0.670} & \textbf{0.879} & 0.520 & \textbf{0.132} & \textbf{0.009} & 0.234 & \textbf{0.291} & \textbf{0.019} & 0.468 & \textbf{18.603} & \textbf{7.947} & 25.318 \\
+1 & LSTM & 0.254 & 0.747 & 1.715 & 0.144 & 0.023 & 0.235 & 0.305 & 0.037 & 0.480 & 23.669 & 12.272 & 25.042 \\
+2 & xLSTM & \textbf{0.596} & \textbf{0.784} & 0.534 & \textbf{0.159} & \textbf{0.015} & 0.268 & \textbf{0.329} & \textbf{0.031} & 0.522 & \textbf{23.313} & \textbf{11.379} & 28.069 \\
+2 & LSTM & 0.182 & 0.649 & 1.587 & 0.173 & 0.027 & 0.279 & 0.347 & 0.046 & 0.545 & 27.702 & 14.107 & 28.125 \\
+3 & xLSTM & \textbf{0.545} & \textbf{0.726} & 0.536 & \textbf{0.171} & \textbf{0.019} & 0.283 & \textbf{0.344} & \textbf{0.034} & 0.541 & \textbf{25.956} & \textbf{13.615} & 29.123 \\
+3 & LSTM & 0.111 & 0.581 & 1.658 & 0.186 & 0.032 & 0.296 & 0.364 & 0.053 & 0.566 & 30.469 & 16.318 & 29.721 \\
+4 & xLSTM & \textbf{0.509} & \textbf{0.692} & 0.535 & \textbf{0.180} & \textbf{0.023} & 0.292 & \textbf{0.354} & \textbf{0.041} & 0.552 & \textbf{28.167} & \textbf{15.265} & 30.403 \\
+4 & LSTM & 0.084 & 0.548 & 1.672 & 0.192 & 0.036 & 0.302 & 0.369 & 0.057 & 0.570 & 31.568 & 17.057 & 30.633 \\
+\bottomrule
+\end{tabular}
+} % Uncomment if using \resizebox
+\end{table}
