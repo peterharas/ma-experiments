@@ -215,3 +215,32 @@ Horizon & Model & \multicolumn{3}{r}{NSE} & \multicolumn{3}{r}{MAE} & \multicolu
 \end{tabular}
 } % Uncomment if using \resizebox
 \end{table}
+
+
+
+
+Here is also an example of my writing style, please stay consistent with it:
+
+
+\subsection{Experiment for RQ1}
+\label{subsec:experiment_rq1}
+
+RQ1 aims to answer to what extent novel ML architectures are able to outperform existing approaches in the karst spring time series forecasting scenario. Specifically, the xLSTM and the TFT models are chosen for the novel architectures, and are evaluated against their LSTM and Transformer counterparts. Two naive methods based on the input's arithmetic mean and the last known input serve as a common baseline for comparison. The models are described in more detail in section \ref{sec:methods_model}, and the naive baselines are introduced in section \ref{sec:methods_model_naive_baselines}.
+
+The model architectures are compared using two training scenarios: first, specialised models are trained for each spring on their observations with the training timestamps. Hyperparameter optimisation is performed on their observations with the validation timestamps (see section \ref{sec:methods_model_hyperparameter} for more details). These models specialised in a single spring are evaluated on the same spring they were trained on, but with data from the testing period starting in 2018 that was not available to the model during training and optimisation. This procedure is performed for all 35 springs for which training, validation, and test data are available according to the splitting strategy defined in section \ref{sec:methods_data}.
+
+The other training approach constructs a single generalised model trained and optimised on multiple springs. Evaluation is performed on the test splits of the training and validation springs and additionally on a set of unseen springs that were not involved in the training and optimisation steps. The test observations of the unseen springs are novel to the generalised model in two ways: the generalised model was neither trained nor optimised on data from the spring, nor on any timestamps from that observation period reserved for testing. While the unseen springs are novel in those regards, it shall be noted that their scaling is performed based on their training splits, or on the averaged scales from the other springs in case no training split is available for the unseen spring. Therefore, their data is still influenced by observations from before the testing period. 
+
+The set of unseen springs is selected using a multi-step procedure. Of the 42 available springs, only those with an hourly resolution are considered for training, the remaining two are excluded. There is a spring for which data is available only from March 14, 2018, that spring is selected as an unseen spring because no data is available for it within the training period. Three springs lack full data coverage within the testing period from 2018 to 2020, those springs are selected for training only. Out of the remaining 36 springs, the 9 springs that have the least data present in the training period, resulting from the more recent start of their measurements, are selected as unseen springs. Using the described procedure, a total of 30 springs are selected for training, and 10 are considered as springs unseen during training. One of the springs selected for training only contains observations starting within the validation period. That spring's involvement in the training procedure is therefore limited to the hyperparameter optimisation phase of the model creation. The flowchart in Figure \ref{fig:flow_selection} visualises the logic based on which the selection is performed. 
+
+\begin{figure}[htbp]
+\centerline{\includegraphics[scale=0.5]{graphics/selection.png}}
+\caption{Flow-chart describing the logic based on which springs are selected for training and testing. }
+\label{fig:flow_selection}
+\end{figure}
+
+\newpage
+
+If the observations of a spring selected for training do not span the entire training period from 2001 to 2014, the specialised model is trained on fewer data. In the case of the generalised model trained on multiple springs, the influence of that spring on the model is smaller than the influence of those springs with full data availability in the training period. Similarly, if a spring does not have data covering the entire test period, evaluation is either omitted if no test data is available at all, or evaluation is performed on the partially available test data, like in the case of the unseen spring for which data is only present from March 2018. 
+
+The metrics used for evaluation are described in detail in section \ref{sec:evaluation_metrics}.
