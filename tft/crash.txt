@@ -1,0 +1,18 @@
+/Users/peter/dev/ma-experiments/venv/lib/python3.13/site-packages/lightning/pytorch/utilities/parsing.py:213: Attribute 'logging_metrics' is an instance of `nn.Module` and is already saved during checkpointing. It is recommended to ignore them using `self.save_hyperparameters(ignore=['logging_metrics'])`.
+Device: cpu
+Train 1/10: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 4379/4379 [14:30<00:00,  5.03it/s]
+Traceback (most recent call last):
+  File "/Users/peter/dev/ma-experiments/tft/tft_poc_pf.py", line 157, in <module>
+    train_tft(
+    ~~~~~~~~~^
+        model=model,
+        ^^^^^^^^^^^^
+    ...<7 lines>...
+        model_save_path=MODEL_PATH
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/peter/dev/ma-experiments/tft/tft_train.py", line 58, in train_tft
+    xb = xb.to(device)
+         ^^^^^
+AttributeError: 'dict' object has no attribute 'to'
