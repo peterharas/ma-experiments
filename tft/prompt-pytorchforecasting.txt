@@ -1,0 +1,51 @@
+I want to implement a proof of concept for a Temporal Fusion Transformer (TFT), like the xLSTM proof of concept that I provided to you in the attachements in the file xlstm_poc.py.
+
+I want to use PyTorch Forecasting for the TFT. Here is an example and the documentation, please fetch it and use it as context:
+https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.temporal_fusion_transformer._tft.TemporalFusionTransformer.html
+https://pytorch-forecasting.readthedocs.io/en/stable/tutorials/stallion.html
+
+Here is the challenge: 
+
+I do not wish to youe PyTorch Forecasting's TimeSeriesDataSet. Instead, I want to use my own PyTorch Dataloaders, as in xlstm_poc.py. 
+
+My Dataloaders are built from a custom sequencing function, where the input is a matrix containing data for multiple features for 168 hours (168 steps). In my xLSTM POC, the target is a tensor of four values, which correspond to forecasts 24, 48, 72, and 96 hours ahead. I do not know in what format PyTorch Forecasting does its predictions. If necessary, I could modify my data loaders to have the entire hourly sequence as the target, and extract my desired point preditcions for the required horizons. The target is discharge. 
+
+For the POC, it suffices if the TFT trains. I do not need any code that finds the learning rate or does hyperparam optimization for now. I also do not wish to include static covariates or future known inputs for now. 
+
+Here is my create_sequences function for context:
+
+
+def create_sequences(X, y, timestamps, window_len, forecast_steps):
+    Xs, ys, ts = [], [], []
+    max_horizon = max(forecast_steps)
+
+    for i in range(len(X) - window_len - max_horizon + 1):
+        X_window = X.iloc[i:i + window_len].values
+        targets = np.array([y.iloc[i + window_len + h - 1] for h in forecast_steps])
+
+        # Skip if any NaNs in inputs or targets
+        if np.isnan(X_window).any() or np.isnan(targets).any():
+            continue
+
+        Xs.append(X_window)
+        ys.append(targets)
+
+        # Store timestamps for each forecast horizon
+        ts.append([timestamps.iloc[i + window_len + h - 1] for h in forecast_steps])
+
+    return np.array(Xs), np.array(ys), np.array(ts)
+
+
+
+Here is the head of a raw dataset used for sequencing as context:
+
+timestamp,conductivity,discharge,temperature,sh,rr,tl,day_sin,day_cos,mth_sin,mth_cos,delta_sh,rr_lagged,tl_lagged,sh_lagged
+2001-01-01 00:00:00,0.749842470069313,0.04892095855951277,0.5398437499999997,0.13175953884161404,,,0.5086067577787649,0.9999259196045581,0.75,0.9330127018922194,0.4000000000000109,,,0.13175953884161404
+2001-01-01 01:00:00,0.749842470069313,0.04892095855951277,0.5398437499999997,0.13175953884161404,,,0.5086067577787649,0.9999259196045581,0.75,0.9330127018922194,0.4000000000000109,,,0.13175953884161404
+2001-01-01 02:00:00,0.749842470069313,0.04892095855951277,0.5398437499999997,0.13175953884161404,,,0.5086067577787649,0.9999259196045581,0.75,0.9330127018922194,0.4000000000000109,,,0.13175953884161404
+2001-01-01 03:00:00,0.749842470069313,0.04892095855951277,0.5398437499999997,0.13175953884161404,,,0.5086067577787649,0.9999259196045581,0.75,0.9330127018922194,0.4000000000000109,,,0.13175953884161404
+2001-01-01 04:00:00,0.749842470069313,0.04892095855951277,0.5398437499999997,0.13175953884161404,,,0.5086067577787649,0.9999259196045581,0.75,0.9330127018922194,0.4000000000000109,,,0.13175953884161404
+2001-01-01 05:00:00,0.749842470069313,0.04892095855951277,0.5398437499999997,0.13175953884161404,,,0.5086067577787649,0.9999259196045581,0.75,0.9330127018922194,0.4000000000000109,,,0.13175953884161404
+2001-01-01 06:00:00,0.749842470069313,0.04892095855951277,0.5398437499999997,0.13175953884161404,,,0.5086067577787649,0.9999259196045581,0.75,0.9330127018922194,0.4000000000000109,,,0.13175953884161404
+2001-01-01 07:00:00,0.749842470069313,0.04892095855951277,0.5398437499999997,0.131347790282734,,,0.5086067577787649,0.9999259196045581,0.75,0.9330127018922194,0.38125000000001125,,,0.13175953884161404
+2001-01-01 08:00:00,0.749842470069313,0.04892095855951277,0.5398437499999997,0.13024979412572055,,,0.5086067577787649,0.9999259196045581,0.75,0.9330127018922194,0.3500000000000121,,,0.131347790282734
