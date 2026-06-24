@@ -8,7 +8,6 @@ from datetime import datetime
 
 from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
-from tft.tft_train import train_tft
 from util.metrics import *
 from util.paths import *
 from util.experiment_params import *
@@ -16,11 +15,13 @@ from util.sequencing import create_sequences_full_horizon
 
 import torch
 import torch.nn as nn
-from torch.utils.data import TensorDataset, DataLoader
+from torch.utils.data import DataLoader
 
 from pytorch_forecasting.models.temporal_fusion_transformer import TemporalFusionTransformer
 from pytorch_forecasting.metrics import MAE
 
+from tft.tft_custom_dataset import TFTCustomDataset
+from tft.tft_train import train_tft
 
 SEED = 12019844
 os.environ["PYTHONHASHSEED"] = str(SEED)
@@ -82,29 +83,22 @@ X_test, y_test, ts_test  = create_sequences_full_horizon(test_df[input_cols],
                                     WINDOW_LEN, 
                                     96)
 
-X_train = torch.tensor(X_train, dtype=torch.float32)
-y_train = torch.tensor(y_train, dtype=torch.float32)
-
-X_valid = torch.tensor(X_valid, dtype=torch.float32)
-y_valid = torch.tensor(y_valid, dtype=torch.float32)
-
-X_test = torch.tensor(X_test, dtype=torch.float32)
-y_test = torch.tensor(y_test, dtype=torch.float32)
 
 train_loader = DataLoader(
-    TensorDataset(X_train, y_train),
+    TFTCustomDataset(X_train, y_train),
     batch_size=BATCH_SIZE,
     shuffle=True
 )
 
 valid_loader = DataLoader(
-    TensorDataset(X_valid, y_valid),
+    TFTCustomDataset(X_valid, y_valid),
     batch_size=BATCH_SIZE,
     shuffle=False
 )
 
+# You will likely also need your test_loader later for inference
 test_loader = DataLoader(
-    TensorDataset(X_test, y_test),
+    TFTCustomDataset(X_test, y_test),
     batch_size=BATCH_SIZE,
     shuffle=False
 )
@@ -115,25 +109,41 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 num_input_features = len(input_cols)
 
+# Define our variables
+unknown_reals = [f"feat_{i}" for i in range(num_input_features)]
+known_reals = ["dummy_known"]
+
 model = TemporalFusionTransformer(
     hidden_size=EMBEDDING_SIZE,
     lstm_layers=1,
     hidden_continuous_size=EMBEDDING_SIZE,
     attention_head_size=4,
-    output_size=1, # 1 for point prediction. (Change to 7 if using QuantileLoss later)
+    output_size=1, # 1 for point prediction
     loss=MAE(),
+    
+    # TFT needs max_encoder_length for Attention masking
     max_encoder_length=WINDOW_LEN,       # 168
-    max_prediction_length=max(FORECAST_HS), # 96
     
-    # Register your unknown reals (the actual features in X)
-    time_varying_unknown_reals=[f"feat_{i}" for i in range(num_input_features)],
-    # Register the single dummy variable to satisfy the decoder VSN
-    time_varying_known_reals=["dummy_known"], 
+    # --- EXACT VARIABLES THE TFT EXPECTS ---
     
-    static_categoricals=[],
+    # 1. Total pool of variables
+    x_reals=unknown_reals + known_reals,
+    x_categoricals=[],
+    
+    # 2. What goes into the Encoder
+    time_varying_reals_encoder=unknown_reals + known_reals,
+    time_varying_categoricals_encoder=[],
+    
+    # 3. What goes into the Decoder
+    time_varying_reals_decoder=known_reals,
+    time_varying_categoricals_decoder=[],
+    
+    # 4. Statics
     static_reals=[],
-    time_varying_unknown_categoricals=[],
-    time_varying_known_categoricals=[],
+    static_categoricals=[],
+    
+    # (Notice: time_varying_unknown_reals is COMPLETELY REMOVED)
+    
 ).to(device)
 
 criterion = nn.L1Loss()
