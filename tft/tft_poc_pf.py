@@ -19,6 +19,7 @@ from torch.utils.data import DataLoader
 
 from pytorch_forecasting.models.temporal_fusion_transformer import TemporalFusionTransformer
 from pytorch_forecasting.metrics import MAE
+from pytorch_forecasting.data.encoders import TorchNormalizer
 
 from tft.tft_custom_dataset import TFTCustomDataset
 from tft.tft_train import train_tft
@@ -121,6 +122,8 @@ model = TemporalFusionTransformer(
     output_size=1, # 1 for point prediction
     loss=MAE(),
     
+    output_transformer=TorchNormalizer(),
+
     # TFT needs max_encoder_length for Attention masking
     max_encoder_length=WINDOW_LEN,       # 168
     
