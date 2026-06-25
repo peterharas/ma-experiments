@@ -160,7 +160,6 @@ def trainable_tft(config, X_t=None, y_t=None, X_v=None, y_v=None):
         device=device,
         epochs=config["epochs"],
         patience=config["patience"],
-        model_save_path=MODEL_PATH,
         use_ray=True
     )
 
