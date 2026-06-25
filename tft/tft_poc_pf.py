@@ -59,9 +59,11 @@ os.makedirs(SPRING_MODEL_DIR, exist_ok=True)
 train_df = pd.read_csv(TRAIN_PATH, parse_dates=['timestamp'])
 valid_df = pd.read_csv(VALID_PATH, parse_dates=['timestamp'])
 test_df = pd.read_csv(TEST_PATH, parse_dates=['timestamp'])
-train_df = pd.read_csv(TRAIN_PATH, parse_dates=['timestamp'])
-valid_df = pd.read_csv(VALID_PATH, parse_dates=['timestamp'])
-test_df = pd.read_csv(TEST_PATH, parse_dates=['timestamp'])
+
+# For dev purposes
+# train_df = train_df.iloc[:1680]
+# valid_df = valid_df.iloc[:1680]
+# test_df = test_df.iloc[:1680]
 
 print("Creating sequences...")
 input_cols = [c for c in test_df.columns if c not in ['timestamp']]

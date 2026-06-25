@@ -55,9 +55,11 @@ def train_tft(
         with torch.no_grad():
 
             for xb, yb in valid_loader:
-                xb = xb.to(device)
+                for k, v in xb.items():
+                    xb[k] = v.to(device)
                 yb = yb.to(device)
-                preds = model(xb)
+                out = model(xb)
+                preds = out.prediction.squeeze(-1) 
                 loss = criterion(preds, yb)
                 val_loss += loss.item()
 
