@@ -1,8 +1,12 @@
 absl-py==2.4.0
+aiohappyeyeballs==2.6.2
+aiohttp==3.14.1
+aiosignal==1.4.0
 annotated-doc==0.0.4
 annotated-types==0.7.0
 arrow==1.4.0
 astunparse==1.6.3
+async-timeout==5.0.1
 attrs==26.1.0
 Authlib==1.7.0
 certifi==2026.4.22
@@ -19,6 +23,7 @@ cycler==0.12.1
 filelock==3.29.0
 flatbuffers==25.12.19
 fonttools==4.62.1
+frozenlist==1.8.0
 fsspec==2026.4.0
 gast==0.7.0
 google-pasta==0.2.0
@@ -35,6 +40,8 @@ keras-tuner==1.4.8
 kiwisolver==1.5.0
 kt-legacy==1.0.5
 libclang==18.1.1
+lightning==2.6.5
+lightning-utilities==0.15.3
 Markdown==3.10.2
 markdown-it-py==4.0.0
 MarkupSafe==3.0.3
@@ -43,6 +50,7 @@ mdurl==0.1.2
 ml_dtypes==0.5.4
 mpmath==1.3.0
 msgpack==1.1.2
+multidict==6.7.1
 namex==0.1.0
 networkx==3.4.2
 ninja==1.13.0
@@ -93,6 +101,7 @@ pandas==2.3.3
 pillow==12.2.0
 prometheus_client==0.25.0
 prompt_toolkit==3.0.52
+propcache==0.5.2
 protobuf==7.34.1
 psutil==7.2.2
 py-cpuinfo==9.0.0
@@ -104,6 +113,8 @@ pydantic_core==2.46.3
 Pygments==2.20.0
 pyparsing==3.3.2
 python-dateutil==2.9.0.post0
+pytorch-forecasting==1.8.0
+pytorch-lightning==2.6.5
 pytz==2026.1.post1
 PyYAML==6.0.3
 questionary==2.1.1
@@ -113,6 +124,7 @@ referencing==0.37.0
 requests==2.33.1
 rich==15.0.0
 rpds-py==0.30.0
+scikit-base==1.0.2
 scikit-learn==1.7.2
 scipy==1.15.3
 shellingham==1.5.4
@@ -125,6 +137,7 @@ tensorflow==2.21.0
 termcolor==3.3.0
 threadpoolctl==3.6.0
 torch==2.5.1+cu121
+torchmetrics==1.9.0
 tqdm==4.67.3
 triton==3.1.0
 typer==0.24.2
@@ -136,3 +149,4 @@ wcwidth==0.6.0
 Werkzeug==3.1.8
 wrapt==2.1.2
 xlstm==2.0.0
+yarl==1.24.2
