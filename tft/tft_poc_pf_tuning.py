@@ -218,7 +218,6 @@ valid_loader = DataLoader(
     shuffle=False
 )
 
-# You will likely also need your test_loader later for inference
 test_loader = DataLoader(
     TFTCustomDataset(X_test, y_test),
     batch_size=BATCH_SIZE,
