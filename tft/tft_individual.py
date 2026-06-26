@@ -139,10 +139,10 @@ for spring_id in spring_ids:
     print("Tuning...")
 
     config = {
-        "hidden_size": tune.grid_search([64, 96, 168]),
+        "hidden_size": tune.grid_search([64, 96]),
         "dropout": 0.1,
         "lr": tune.grid_search([0.001, 0.0001]),
-        "lstm_layers": tune.grid_search([1, 2]),
+        "lstm_layers": 2,
         "attention_head_size": 4,
         "epochs": 10,
         "patience": 3,
