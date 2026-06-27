@@ -287,6 +287,9 @@ for spring_id in spring_ids:
     tracker = EmissionsTracker(log_level="error")
     tracker.start()
 
+    # Extract indices: 23 (24h), 47 (48h), 71 (72h), 95 (96h)
+    horizon_indices = [23, 47, 71, 95]
+
     preds = []
     with torch.no_grad():
         for batch_x, _ in test_loader:
@@ -296,8 +299,6 @@ for spring_id in spring_ids:
             out = model(batch_x)
             full_preds = out.prediction.squeeze(-1).cpu() # Shape: (Batch, 96)
             
-            # Extract indices: 23 (24h), 47 (48h), 71 (72h), 95 (96h)
-            horizon_indices = [23, 47, 71, 95]
             target_preds = full_preds[:, horizon_indices] # Shape: (Batch, 4)
             
             preds.append(target_preds)
@@ -313,8 +314,9 @@ for spring_id in spring_ids:
     y_test_orig = y_scaler.inverse_transform(y_test) * 0.001
     y_pred_orig = y_scaler.inverse_transform(y_pred)  * 0.001
 
-    for i, d in enumerate(FORECAST_DAYS):
-        y_target_d = y_test_orig[:, i]
+    for i, (d, h_idx) in enumerate(zip(FORECAST_DAYS, horizon_indices)):
+        # Slice the correct actual horizon (h_idx) and the correct prediction horizon (i)
+        y_target_d = y_test_orig[:, h_idx]
         y_pred_d = y_pred_orig[:, i]
         metrics = evaluate_forecast(y_target_d, y_pred_d)
 
@@ -323,11 +325,12 @@ for spring_id in spring_ids:
         plot_filename = f"{spring_id}_{MODEL}_{d}d_{experiment_timestamp}.png"
         plot_path = os.path.join(plots_base_dir, plot_filename)
 
-        timestamps_d = ts_test[:, i]
+        timestamps_d = ts_test[:, h_idx] 
 
         plt.figure(figsize=(12, 4))
-        plt.plot(timestamps_d, y_test_orig[:, i], label="Observed", linewidth=1)
-        plt.plot(timestamps_d, y_pred_orig[:, i], label="Predicted", linewidth=1)
+        plt.plot(timestamps_d, y_target_d, label="Observed", linewidth=1) 
+        plt.plot(timestamps_d, y_pred_d, label="Predicted", linewidth=1)
+
         plt.title(f"{MODEL} {spring_id} – {d}-Day Ahead Forecast")
         plt.xlabel("Time")
         plt.ylabel("Discharge [m³/s]")
