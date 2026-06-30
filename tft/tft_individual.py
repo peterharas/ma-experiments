@@ -66,11 +66,13 @@ RESULTS_FILENAME = f"{MODEL}_results_{experiment_timestamp}.csv"
 RESULTS_FILEPATH = os.path.join(RESULTS_DIR, RESULTS_FILENAME)
 results = []
 
-with open(SPRING_LIST_FILE, 'r') as f:
-    spring_ids = [line.strip() for line in f if line.strip()]
+# with open(SPRING_LIST_FILE, 'r') as f:
+#    spring_ids = [line.strip() for line in f if line.strip()]
 
 # for dev purposes
 # spring_ids = ["395038"]
+
+spring_ids = ["396226", "396291", "396333", "396440", "396705"]
 
 for spring_id in spring_ids:
     print(f"Running {MODEL} for {spring_id}...")
