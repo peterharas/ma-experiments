@@ -2,18 +2,27 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Custom colors
 my_colors = {
     'LSTM': '#56B4E9',   # Sky Blue
     'xLSTM': '#0072B2',  # Deep Marine    
 }
 
-# 1. Load the data
-file_xlstm = 'results/xLSTM_results_20260608_090620.csv'
-file_lstm = 'results/LSTM_results_20260429_093001.csv'
+plt.rcParams.update({
+    'font.size': 12,          # Base font size
+    'axes.titlesize': 14,     # Subplot title size (default is 12)
+    'axes.labelsize': 12,     # X/Y label size (default is 10)
+    'xtick.labelsize': 12,    # X tick label size (default is 10)
+    'ytick.labelsize': 12,    # Y tick label size (default is 10)
+    'legend.fontsize': 12     # Legend font size (default is 10)
+})
 
-df_xlstm = pd.read_csv(file_xlstm)
-df_lstm = pd.read_csv(file_lstm)
+# 1. Load the data
+df_xlstm = pd.read_csv('results/xLSTM_LARGE_results_20260612_065528.csv')
+df_lstm = pd.read_csv('results/LSTM_LARGE_results_20260504_063436.csv')
+
+df_xlstm['model'] = df_xlstm['model'].str.replace('_LARGE', '', regex=False)
+df_lstm['model'] = df_lstm['model'].str.replace('_LARGE', '', regex=False)
+
 
 # 2. Merge the dataframes on spring_id and horizon
 df_merged = pd.merge(
@@ -32,41 +41,14 @@ df_merged['spring_id_str'] = df_merged['spring_id'].astype(str)
 # Define horizons to iterate over
 horizons = [1, 2, 3, 4]
 
-# 5. Create subplots (stacked vertically, sharing the x-axis)
-fig, axes = plt.subplots(nrows=len(horizons), ncols=1, figsize=(11.69, 8.27), sharex=True)
-
-# Loop through each horizon and its corresponding axis
-for ax, h in zip(axes, horizons):
-    # Filter data for the current horizon
-    df_h = df_merged[df_merged['horizon'] == h]
-    
-    # Plot LSTM and xLSTM lines using custom colors
-    ax.plot(df_h['spring_id_str'], df_h['nse_lstm'], marker='o', 
-            color=my_colors['LSTM'], label='LSTM', alpha=0.8)
-    ax.plot(df_h['spring_id_str'], df_h['nse_xlstm'], marker='s', 
-            color=my_colors['xLSTM'], label='xLSTM', alpha=0.8)
-    
-    # Formatting for each individual subplot
-    ax.set_ylabel('NSE')
-    ax.set_title(f'NSE Comparison: LSTM vs xLSTM individual spring models (Horizon {h})')
-    ax.legend(loc='lower right')
-    ax.grid(True, linestyle='--', alpha=0.6)
-
-# Formatting the shared x-axis (only applies to the bottom plot)
-axes[-1].set_xlabel('Spring ID', fontsize=12)
-plt.xticks(rotation=45, ha='right', rotation_mode='anchor')
-
-plt.tight_layout()
-# plt.savefig(os.path.join('evaluation', 'xlstm_lstm_linecharts_individual.png'), dpi=300, bbox_inches='tight')
-plt.show()
-
 # 6. Paired difference plot: ΔNSE = xLSTM - LSTM
 
 fig, axes = plt.subplots(
     nrows=len(horizons), 
     ncols=1, 
     figsize=(11.69, 8.27), 
-    sharex=True
+    sharex=True,
+    sharey=True
 )
 
 for ax, h in zip(axes, horizons):
@@ -95,7 +77,7 @@ for ax, h in zip(axes, horizons):
     
     # Formatting
     ax.set_ylabel('Δ NSE')
-    ax.set_title(f'Paired Difference (xLSTM − LSTM) | Horizon {h}')
+    ax.set_title(f'Paired Difference (xLSTM − LSTM) | Multi-Spring Models | Horizon {h}')
     ax.grid(True, linestyle='--', alpha=0.6)
 
 # Shared x-axis formatting
@@ -103,5 +85,5 @@ axes[-1].set_xlabel('Spring ID', fontsize=12)
 plt.xticks(rotation=45, ha='right', rotation_mode='anchor')
 
 plt.tight_layout()
-# plt.savefig(os.path.join('evaluation', 'xlstm_lstm_delta_nse.png'), dpi=300, bbox_inches='tight')
+plt.savefig(os.path.join('evaluation', 'xlstm_lstm', 'plots', 'xlstm_lstm_lollipop_large.png'), dpi=300, bbox_inches='tight')
 plt.show()
