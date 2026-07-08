@@ -149,7 +149,7 @@ config = {
     "lstm_layers": 2,
     "attention_head_size": 4,
     "epochs": 10,
-    "patience": 3,
+    "patience": 2,
 }
 
 def trainable_tft(config, X_t=None, y_t=None, X_v=None, y_v=None):
