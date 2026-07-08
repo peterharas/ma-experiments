@@ -39,7 +39,7 @@ def create_sequences_full_horizon(X, y, timestamps, window_len, max_horizon):
     return np.array(Xs), np.array(ys), np.array(ts)
 
 
-# expected input for future_known_input_cols: ["temperature","sh","rr","tl"]
+# expected input for future_known_input_cols: ["sh","rr","tl"]
 def create_sequences_full_horizon_future(X, y, timestamps, window_len, max_horizon, future_known_input_cols):
     Xs, ys, future_inputs, ts = [], [], [], []
 
