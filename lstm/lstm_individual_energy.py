@@ -51,6 +51,7 @@ os.makedirs(MODELS_DIR, exist_ok=True)
 # Path to the results file from your previous keras_tuner run
 PREVIOUS_RESULTS_FILE = os.path.join(RESULTS_DIR, "LSTM_results_20260429_093001.csv")
 hp_df = pd.read_csv(PREVIOUS_RESULTS_FILE)
+hp_df['spring_id'] = hp_df['spring_id'].apply(str)
 
 # Model params
 BATCH_SIZE = 24
