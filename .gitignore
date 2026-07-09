@@ -1,5 +1,5 @@
 venv
-venv
+venv_lstm
 __pycache__
 .DS_Store
 data
