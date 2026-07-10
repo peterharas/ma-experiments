@@ -95,7 +95,7 @@ for spring_id in spring_ids:
     test_df = pd.read_csv(TEST_PATH, parse_dates=['timestamp'])
 
     input_cols = [c for c in test_df.columns if c not in ['timestamp']]
-    future_known_input_cols = ["rr", "tl"]
+    future_known_input_cols = ["rr","tl","sh","delta_sh"]
     known_indices = [input_cols.index(c) for c in future_known_input_cols]
 
     X_train, y_train, future_train, ts_train  = create_sequences_full_horizon_future(train_df[input_cols], 
