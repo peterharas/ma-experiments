@@ -47,6 +47,7 @@ os.makedirs(MODELS_DIR, exist_ok=True)
 # Path to the results file from your previous keras_tuner run
 PREVIOUS_RESULTS_FILE = os.path.join(RESULTS_DIR, "TRANSFORMER_results_20260430_193701.csv")
 hp_df = pd.read_csv(PREVIOUS_RESULTS_FILE)
+hp_df['spring_id'] = hp_df['spring_id'].apply(str)
 
 # Constants
 LOSS = 'mae'
