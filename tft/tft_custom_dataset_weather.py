@@ -6,7 +6,7 @@ class TFTCustomDatasetWeather(Dataset):
         """
         X: (Num_Samples, 168, num_features)
         y: (Num_Samples, 96)
-        future: (Num_Samples, 96, 2)
+        future: (Num_Samples, 96, 4)
         known_indices: List of integers, the column indices in X that correspond to 'future'
         """
         self.X = torch.tensor(X, dtype=torch.float32)
