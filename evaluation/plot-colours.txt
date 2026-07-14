@@ -4,3 +4,4 @@ golden orange (Transformer): #E69F00
 burnt vermilion (TFT): #D55E00
 dark gray (moving ave): #595959
 light gray (last known): #BDBDBD
+'TFT_WEATHER': '#BB0000'
