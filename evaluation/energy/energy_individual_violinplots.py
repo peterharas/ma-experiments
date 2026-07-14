@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 colors = {
     'LSTM': '#56B4E9',
     'xLSTM': '#0072B2',
-    'TRANSFORMER': '#E69F00',
+    'Transformer': '#E69F00',
     'TFT': '#D55E00',
     'TFT_WEATHER': '#BB0000',  
 }
@@ -28,7 +28,8 @@ df_tft_weather = pd.read_csv('results/TFT_WEATHER_results_20260710_122632.csv')
 
 df = pd.concat([df_lstm, df_xlstm, df_transformer, df_tft, df_tft_weather], ignore_index=True)
 df['model'] = df['model'].str.replace('_ENERGY', '')
-df['model'] = pd.Categorical(df['model'], categories=['LSTM', 'xLSTM', 'TRANSFORMER', 'TFT', 'TFT_WEATHER'], ordered=True)
+df['model'] = df['model'].str.replace('TRANSFORMER', 'Transformer')
+df['model'] = pd.Categorical(df['model'], categories=['LSTM', 'xLSTM', 'Transformer', 'TFT', 'TFT_WEATHER'], ordered=True)
 df = df[df['horizon'] == 1]
 
 df['energy inference [kWh]'] = df['energy inference [kWh]'] * 1000

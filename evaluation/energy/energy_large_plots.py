@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 colors = {
     'LSTM': '#56B4E9',
     'xLSTM': '#0072B2',
-    'TRANSFORMER': '#E69F00',
+    'Transformer': '#E69F00',
     'TFT': '#D55E00',
 }
 
@@ -25,9 +25,10 @@ df_transformer = pd.read_csv('results/TRANSFORMER_LARGE_ENERGY_results_20260710_
 df_tft = pd.read_csv('results/TFT_LARGE_results_20260707_200924.csv')
 
 df = pd.concat([df_lstm, df_xlstm, df_transformer, df_tft], ignore_index=True)
+df['model'] = df['model'].str.replace('TRANSFORMER', 'Transformer')
 df['model'] = df['model'].str.replace('_LARGE', '')
 df['model'] = df['model'].str.replace('_ENERGY', '')
-df['model'] = pd.Categorical(df['model'], categories=['LSTM', 'xLSTM', 'TRANSFORMER', 'TFT'], ordered=True)
+df['model'] = pd.Categorical(df['model'], categories=['LSTM', 'xLSTM', 'Transformer', 'TFT'], ordered=True)
 
 df['energy inference [kWh]'] = df['energy inference [kWh]'] * 1000
 df['emissions inference [kg CO₂]'] = df['emissions inference [kg CO₂]'] * 1000
