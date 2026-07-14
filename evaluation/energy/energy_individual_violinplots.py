@@ -31,8 +31,19 @@ df['model'] = df['model'].str.replace('_ENERGY', '')
 df['model'] = pd.Categorical(df['model'], categories=['LSTM', 'xLSTM', 'TRANSFORMER', 'TFT', 'TFT_WEATHER'], ordered=True)
 df = df[df['horizon'] == 1]
 
-energy_cols = ['energy training [kWh]', 'energy inference [kWh]']
-co2_cols = ['emissions training [kg CO₂]', 'emissions inference [kg CO₂]']
+df['energy inference [kWh]'] = df['energy inference [kWh]'] * 1000
+df['emissions inference [kg CO₂]'] = df['emissions inference [kg CO₂]'] * 1000
+
+rename_mapping = {
+    'energy training [kWh]': 'Energy Training [kWh]',
+    'energy inference [kWh]': 'Energy Inference [Wh]',
+    'emissions training [kg CO₂]': 'Emissions Training [kg CO₂]',
+    'emissions inference [kg CO₂]': 'Emissions Inference [g CO₂]'
+}
+df = df.rename(columns=rename_mapping)
+
+energy_cols = ['Energy Training [kWh]', 'Energy Inference [Wh]']
+co2_cols = ['Emissions Training [kg CO₂]', 'Emissions Inference [g CO₂]']
 
 def print_summary(cols, label):
     summary = df.groupby(['model'])[cols].agg(['mean', 'median', 'std']).reset_index()

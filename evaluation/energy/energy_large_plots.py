@@ -29,14 +29,25 @@ df['model'] = df['model'].str.replace('_LARGE', '')
 df['model'] = df['model'].str.replace('_ENERGY', '')
 df['model'] = pd.Categorical(df['model'], categories=['LSTM', 'xLSTM', 'TRANSFORMER', 'TFT'], ordered=True)
 
+df['energy inference [kWh]'] = df['energy inference [kWh]'] * 1000
+df['emissions inference [kg CO₂]'] = df['emissions inference [kg CO₂]'] * 1000
+
+rename_mapping = {
+    'energy training [kWh]': 'Energy Training [kWh]',
+    'energy inference [kWh]': 'Energy Inference [Wh]',
+    'emissions training [kg CO₂]': 'Emissions Training [kg CO₂]',
+    'emissions inference [kg CO₂]': 'Emissions Inference [g CO₂]'
+}
+df = df.rename(columns=rename_mapping)
+
 df_train = df[(df['horizon'] == 1) & (df['spring_id'] == 395012)]
 
-df_train_print = df_train[['model', 'energy training [kWh]', 'emissions training [kg CO₂]']]
+df_train_print = df_train[['model', 'Energy Training [kWh]', 'Emissions Training [kg CO₂]']]
 print("Large model train energy consumption and emissions")
 print(df_train_print.to_string())
 print(df_train_print.to_latex(index=False, float_format="%.3f"))
 
-train_cols = ['energy training [kWh]', 'emissions training [kg CO₂]']
+train_cols = ['Energy Training [kWh]', 'Emissions Training [kg CO₂]']
 fig, axes = plt.subplots(2, 1, figsize=(11.69, 8.27))
 for i, metric in enumerate(train_cols):
     sns.barplot(
@@ -55,7 +66,7 @@ plt.show()
 
 
 df_inference = df[df['horizon'] == 1]
-inference_cols = ['energy inference [kWh]', 'emissions inference [kg CO₂]']
+inference_cols = ['Energy Inference [Wh]', 'Emissions Inference [g CO₂]']
 
 fig, axes = plt.subplots(2, 1, figsize=(11.69, 8.27))
 for i, metric in enumerate(inference_cols):
