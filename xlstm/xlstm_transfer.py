@@ -59,7 +59,7 @@ results = []
 # ---------------------------------------------------------
 # LARGE MODEL CONFIGURATION (Must match the pre-trained model)
 # ---------------------------------------------------------
-LM_EMBEDDING_DIM = 96  
+LM_EMBEDDING_DIM = 64  
 LM_DROPOUT = 0.1
 LM_ARCHITECTURE = "slstm_first"
 
