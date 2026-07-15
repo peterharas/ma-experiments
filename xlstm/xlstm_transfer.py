@@ -41,7 +41,7 @@ torch.backends.cudnn.benchmark = False
 experiment_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 MODEL = "xLSTM_TRANSFER"
 BATCH_SIZE = 24
-TRANSFER_LR = 1e-3
+TRANSFER_LR = 1e-4
 TRANSFER_EPOCHS = 100
 TRANSFER_PATIENCE = 5
 
