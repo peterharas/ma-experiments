@@ -7,7 +7,7 @@ df_base = pd.read_csv('results/BASELINE_results_20260427_080304.csv')
 df_base_lk = pd.read_csv('results/BASELINE_LASTKNOWN_results_20260427_080725.csv')
 df_xlstm = pd.read_csv('results/xLSTM_results_20260608_090620.csv')
 df_xlstm_large = pd.read_csv('results/xLSTM_LARGE_results_20260612_065528.csv')
-df_xlstm_transfer = pd.read_csv('results/xLSTM_TRANSFER_results_20260716_083507.csv')
+df_xlstm_transfer = pd.read_csv('results/xLSTM_TRANSFER_results_20260716_090233.csv')
 
 # Get the 7 springs from xLSTM_TRANSFER
 transfer_springs = sorted(df_xlstm_transfer['spring_id'].unique())
@@ -63,5 +63,5 @@ for i, h in enumerate(horizons):
 
 plt.suptitle('NSE Comparison across xLSTM Variants and Baselines', fontsize=18)
 plt.tight_layout()
-plt.savefig('evaluation/transfer/plots/xlstm_barplots_mlstm.png')
+plt.savefig('evaluation/transfer/plots/xlstm_barplots_nofreeze.png')
 plt.show()
