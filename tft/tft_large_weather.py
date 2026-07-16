@@ -6,6 +6,7 @@ import pickle
 import sys
 import random
 import os
+import shutil
 
 from datetime import datetime
 from pathlib import Path
@@ -18,7 +19,7 @@ from util.sequencing import create_sequences_full_horizon_future
 
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, ConcatDataset
 
 from tft.tft_custom_dataset_weather import TFTCustomDatasetWeather
 from tft.tft_train import train_tft
@@ -73,13 +74,20 @@ RESULTS_FILENAME = f"{MODEL}_results_{experiment_timestamp}.csv"
 RESULTS_FILEPATH = os.path.join(RESULTS_DIR, RESULTS_FILENAME)
 results = []
 
-# ----------------------- DATA PREPARATION -----------------------
+# ----------------------- DATA PREPARATION (MEMORY OPTIMIZED) -----------------------
 
 with open(SPRING_LIST_FILE_TRAIN, 'r') as f:
     spring_ids_train = [line.strip() for line in f if line.strip()]
 
-X_train_all, y_train_all, future_train_all = [], [], []
-X_valid_all, y_valid_all, future_valid_all = [], [], []
+# Create a temporary directory for memory-mapped arrays
+MMAP_DIR = os.path.join(MODELS_DIR, "mmap_cache")
+if os.path.exists(MMAP_DIR):
+    shutil.rmtree(MMAP_DIR) # Clear old cache if it exists
+os.makedirs(MMAP_DIR, exist_ok=True)
+
+# Keep track of file paths instead of massive arrays
+train_paths = {"X": [], "y": [], "future": []}
+valid_paths = {"X": [], "y": [], "future": []}
 
 future_known_input_cols = ["rr", "tl", "sh", "delta_sh"]
 input_cols = None
@@ -107,9 +115,16 @@ for spring_id in spring_ids_train:
             FORECAST_LENGTH,
             future_known_input_cols
         )
-        X_train_all.append(X_train)
-        y_train_all.append(y_train)
-        future_train_all.append(future_train)
+        
+        # Save to disk
+        x_p, y_p, f_p = [os.path.join(MMAP_DIR, f"{spring_id}_{suffix}_train.npy") for suffix in ["X", "y", "future"]]
+        np.save(x_p, X_train); np.save(y_p, y_train); np.save(f_p, future_train)
+        
+        train_paths["X"].append(x_p); train_paths["y"].append(y_p); train_paths["future"].append(f_p)
+        
+        # Free memory immediately
+        del X_train, y_train, future_train, train_df
+        gc.collect()
     
     if os.path.exists(VALID_PATH):
         valid_df = pd.read_csv(VALID_PATH, parse_dates=['timestamp'])
@@ -121,27 +136,39 @@ for spring_id in spring_ids_train:
             FORECAST_LENGTH,
             future_known_input_cols
         )
-        X_valid_all.append(X_valid)
-        y_valid_all.append(y_valid)
-        future_valid_all.append(future_valid)
+        
+        # Save to disk
+        x_p, y_p, f_p = [os.path.join(MMAP_DIR, f"{spring_id}_{suffix}_valid.npy") for suffix in ["X", "y", "future"]]
+        np.save(x_p, X_valid); np.save(y_p, y_valid); np.save(f_p, future_valid)
+        
+        valid_paths["X"].append(x_p); valid_paths["y"].append(y_p); valid_paths["future"].append(f_p)
+        
+        # Free memory immediately
+        del X_valid, y_valid, future_valid, valid_df
+        gc.collect()
 
-# Concatenate all sequences into massive arrays for the global model
-X_train_all = np.concatenate(X_train_all, axis=0)
-y_train_all = np.concatenate(y_train_all, axis=0)
-future_train_all = np.concatenate(future_train_all, axis=0)
+# Helper function to build the global dataset from disk paths
+def build_global_dataset(paths_dict, known_idx):
+    datasets = []
+    for x_p, y_p, f_p in zip(paths_dict["X"], paths_dict["y"], paths_dict["future"]):
+        # mmap_mode='r' keeps the data on disk, loading only what the DataLoader requests
+        X_mmap = np.load(x_p, mmap_mode='r')
+        y_mmap = np.load(y_p, mmap_mode='r')
+        f_mmap = np.load(f_p, mmap_mode='r')
+        datasets.append(TFTCustomDatasetWeather(X_mmap, y_mmap, f_mmap, known_idx))
+    return ConcatDataset(datasets)
 
-X_valid_all = np.concatenate(X_valid_all, axis=0)
-y_valid_all = np.concatenate(y_valid_all, axis=0)
-future_valid_all = np.concatenate(future_valid_all, axis=0)
+global_train_dataset = build_global_dataset(train_paths, known_indices)
+global_valid_dataset = build_global_dataset(valid_paths, known_indices)
 
 train_loader = DataLoader(
-    TFTCustomDatasetWeather(X_train_all, y_train_all, future_train_all, known_indices),
+    global_train_dataset,
     batch_size=BATCH_SIZE,
     shuffle=True
 )
 
 valid_loader = DataLoader(
-    TFTCustomDatasetWeather(X_valid_all, y_valid_all, future_valid_all, known_indices),
+    global_valid_dataset,
     batch_size=BATCH_SIZE,
     shuffle=False
 )
@@ -164,20 +191,15 @@ config = {
     "patience": 2,
 }
 
-def trainable_tft(config, X_t=None, y_t=None, future_t=None, X_v=None, y_v=None, future_v=None, known_idx=None):
+def trainable_tft(config, t_paths=None, v_paths=None, known_idx=None):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    train_loader = DataLoader(
-        TFTCustomDatasetWeather(X_t, y_t, future_t, known_idx),
-        batch_size=BATCH_SIZE,
-        shuffle=True
-    )
+    # Build datasets securely inside the worker
+    worker_train_dataset = build_global_dataset(t_paths, known_idx)
+    worker_valid_dataset = build_global_dataset(v_paths, known_idx)
 
-    valid_loader = DataLoader(
-        TFTCustomDatasetWeather(X_v, y_v, future_v, known_idx),
-        batch_size=BATCH_SIZE,
-        shuffle=False
-    )
+    tune_train_loader = DataLoader(worker_train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+    tune_valid_loader = DataLoader(worker_valid_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
     model = TemporalFusionTransformer(
         hidden_size=config["hidden_size"],
@@ -203,8 +225,8 @@ def trainable_tft(config, X_t=None, y_t=None, future_t=None, X_v=None, y_v=None,
 
     train_tft(
         model=model,
-        train_loader=train_loader,
-        valid_loader=valid_loader,
+        train_loader=tune_train_loader,
+        valid_loader=tune_valid_loader,
         criterion=criterion,
         optimizer=optimizer,
         device=device,
@@ -223,12 +245,8 @@ scheduler = ASHAScheduler(
 trainable = tune.with_resources(
     tune.with_parameters(
         trainable_tft,
-        X_t=X_train_all,
-        y_t=y_train_all,
-        future_t=future_train_all,
-        X_v=X_valid_all,
-        y_v=y_valid_all,
-        future_v=future_valid_all,
+        t_paths=train_paths,
+        v_paths=valid_paths,
         known_idx=known_indices
     ),
     resources={"cpu": 4, "gpu": 1}
@@ -244,10 +262,11 @@ tuner = tune.Tuner(
     ),
     param_space=config,
 )
+
 tuning_results = tuner.fit()
 best_result = tuning_results.get_best_result(metric="val_loss", mode="min")
 best_config = best_result.config
-print(best_config)
+print("Best config:", best_config)
 
 cleanup_torch()
 
@@ -342,6 +361,7 @@ for spring_id in spring_ids_all:
         future_known_input_cols
     )
 
+    # For inference on a single spring, RAM is not an issue, so we can load directly
     test_loader = DataLoader(
         TFTCustomDatasetWeather(X_test, y_test, future_test, known_indices),
         batch_size=BATCH_SIZE,
@@ -424,3 +444,7 @@ for spring_id in spring_ids_all:
     results_df.to_csv(RESULTS_FILEPATH, index=False)
 
     cleanup_torch()
+
+# Cleanup the mmap cache when entirely finished
+if os.path.exists(MMAP_DIR):
+    shutil.rmtree(MMAP_DIR)
