@@ -54,7 +54,7 @@ FORECAST_LENGTH = 96
 MODELS_DIR = os.path.join("tft", "models")
 LARGE_MODELS_DIR = os.path.join(MODELS_DIR, "large_weather")
 # Adjust this filename to match your saved pre-trained checkpoint
-LARGE_MODEL_FILENAME = None # TBD
+LARGE_MODEL_FILENAME = "TFT_LARGE_WEATHER_20260716_184756.pt"
 LARGE_MODEL_PATH = os.path.join(LARGE_MODELS_DIR, LARGE_MODEL_FILENAME)
 
 os.makedirs(MODELS_DIR, exist_ok=True)
