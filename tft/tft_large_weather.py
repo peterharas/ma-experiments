@@ -63,7 +63,8 @@ MODEL = "TFT_LARGE_WEATHER"
 BATCH_SIZE = 24
 FORECAST_LENGTH = 96
 
-MODELS_DIR = os.path.join("tft", "models")
+# CHANGE THIS LINE to use an absolute path
+MODELS_DIR = os.path.abspath(os.path.join("tft", "models"))
 os.makedirs(MODELS_DIR, exist_ok=True)
 
 LARGE_MODEL_DIR = os.path.join(MODELS_DIR, "large_weather")
