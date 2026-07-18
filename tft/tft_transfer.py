@@ -66,7 +66,7 @@ results = []
 # ---------------------------------------------------------
 # LARGE MODEL CONFIGURATION (Must match your pre-trained model)
 # ---------------------------------------------------------
-LM_HIDDEN_SIZE = 64
+LM_HIDDEN_SIZE = 96
 LM_LSTM_LAYERS = 2
 LM_ATTENTION_HEAD_SIZE = 4
 
@@ -167,13 +167,13 @@ for spring_id in spring_ids:
         sys.exit(1)
 
     # 3. Print Model Summary (Once for the first spring)
-    if spring_id == spring_ids[0]:
-        print("\n--- Pre-trained TFT Model Summary ---")
-        # Dummy batch structure for visual evaluation
-        example_batch, _ = next(iter(train_loader))
-        example_batch = {k: v.to(device) for k, v in example_batch.items()}
-        summary(model, input_data=[example_batch])
-        print("-------------------------------------\n")
+    #if spring_id == spring_ids[0]:
+    #    print("\n--- Pre-trained TFT Model Summary ---")
+    #    # Dummy batch structure for visual evaluation
+    #    example_batch, _ = next(iter(train_loader))
+    #    example_batch = {k: v.to(device) for k, v in example_batch.items()}
+    #    summary(model, input_data=[example_batch])
+    #    print("-------------------------------------\n")
 
     # 4. Freeze variable selection / linear layers; keep sequential & attention components trainable
     for param in model.parameters():
