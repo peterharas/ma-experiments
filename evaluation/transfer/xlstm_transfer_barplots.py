@@ -2,12 +2,21 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
+plt.rcParams.update({
+    'font.size': 14,          # Base font size
+    'axes.titlesize': 16,     # Subplot title size
+    'axes.labelsize': 14,     # X/Y label size
+    'xtick.labelsize': 14,    # X tick label size
+    'ytick.labelsize': 14,    # Y tick label size
+    'legend.fontsize': 14     # Legend font size
+})
+
 # Load data
 df_base = pd.read_csv('results/BASELINE_results_20260427_080304.csv')
 df_base_lk = pd.read_csv('results/BASELINE_LASTKNOWN_results_20260427_080725.csv')
 df_xlstm = pd.read_csv('results/xLSTM_results_20260608_090620.csv')
 df_xlstm_large = pd.read_csv('results/xLSTM_LARGE_results_20260612_065528.csv')
-df_xlstm_transfer = pd.read_csv('results/xLSTM_TRANSFER_results_20260716_090233.csv')
+df_xlstm_transfer = pd.read_csv('results/xLSTM_TRANSFER_results_20260715_153842.csv')
 
 # Get the 7 springs from xLSTM_TRANSFER
 transfer_springs = sorted(df_xlstm_transfer['spring_id'].unique())
@@ -23,8 +32,9 @@ fig, axes = plt.subplots(2, 2, figsize=(16, 12), sharey=True)
 axes = axes.flatten()
 
 horizons = [1, 2, 3, 4]
-# You can change these colors to anything you prefer later
-colors = ['#1f77b4', '#ff7f0e', '#2ca02c'] 
+
+bar_color = '#0072B2'   # Same blue for all bars
+edge_color = 'black'
 
 x = np.arange(len(transfer_springs))
 width = 0.25
@@ -41,16 +51,39 @@ for i, h in enumerate(horizons):
     h_base_lk = df_base_lk[df_base_lk['horizon'] == h].set_index('spring_id')['nse'].reindex(transfer_springs).values
     
     # Plot grouped bars
-    ax.bar(x - width, h_xlstm, width, label='xLSTM', color=colors[0], alpha=0.8)
-    ax.bar(x, h_xlstm_l, width, label='xLSTM_LARGE', color=colors[1], alpha=0.8)
-    ax.bar(x + width, h_xlstm_t, width, label='xLSTM_TRANSFER', color=colors[2], alpha=0.8)
+    ax.bar(
+        x - width, h_xlstm, width,
+        label='xLSTM Individual',
+        color=bar_color,
+        edgecolor=edge_color,
+        hatch='',
+        linewidth=1
+    )
+
+    ax.bar(
+        x, h_xlstm_l, width,
+        label='xLSTM Multi-spring',
+        color=bar_color,
+        edgecolor=edge_color,
+        hatch='////',
+        linewidth=1
+    )
+
+    ax.bar(
+        x + width, h_xlstm_t, width,
+        label='xLSTM Fine-tuned',
+        color=bar_color,
+        edgecolor=edge_color,
+        hatch='xxxx',
+        linewidth=1
+    )
     
     # Plot lines for baselines
-    ax.plot(x, h_base, color='dimgray', linestyle='-', marker='o', linewidth=2, label='BASELINE')
-    ax.plot(x, h_base_lk, color='silver', linestyle='--', marker='x', linewidth=2, label='BASELINE_LASTKNOWN')
+    ax.plot(x, h_base, color='dimgray', linestyle='-', marker='o', linewidth=2, label='Moving Average Baseline')
+    ax.plot(x, h_base_lk, color='silver', linestyle='--', marker='x', linewidth=2, label='Last Known Baseline')
     
     # Formatting
-    ax.set_title(f'Horizon {h}', fontsize=14, fontweight='bold')
+    ax.set_title(f'Horizon {h} Day', fontsize=14, fontweight='bold')
     ax.set_xticks(x)
     ax.set_xticklabels(transfer_springs)
     ax.set_ylabel('NSE Score')
@@ -58,10 +91,9 @@ for i, h in enumerate(horizons):
     ax.grid(axis='y', linestyle='--', alpha=0.7)
     
     # Add legend to the first subplot only to avoid clutter
-    if i == 0:
-        ax.legend(loc='lower right')
+    ax.legend(loc='lower right')
 
-plt.suptitle('NSE Comparison across xLSTM Variants and Baselines', fontsize=18)
+# plt.suptitle('NSE Comparison across xLSTM Variants and Baselines', fontsize=18)
 plt.tight_layout()
-plt.savefig('evaluation/transfer/plots/xlstm_barplots_nofreeze.png')
+plt.savefig('evaluation/transfer/plots/xlstm_barplots_mlstm.png')
 plt.show()
