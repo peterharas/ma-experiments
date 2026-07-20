@@ -207,7 +207,7 @@ plt.tight_layout()
 
 
 plt.savefig(
-    "evaluation/transfer/plots/xlstm_weather_transfer_environmental_barplots.png",
+    "evaluation/transfer/plots/xlstm_transfer_energy_barplots.png",
     dpi=300,
     bbox_inches="tight"
 )
