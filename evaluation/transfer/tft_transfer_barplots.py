@@ -92,5 +92,5 @@ for i, h in enumerate(horizons):
     ax.legend(loc='lower right')
 
 plt.tight_layout()
-plt.savefig('evaluation/transfer/plots/tft_barplots.png')
+plt.savefig('evaluation/transfer/plots/tft_weather_transfer_barplots.png')
 plt.show()

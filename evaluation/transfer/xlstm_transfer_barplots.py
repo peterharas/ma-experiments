@@ -95,5 +95,5 @@ for i, h in enumerate(horizons):
 
 # plt.suptitle('NSE Comparison across xLSTM Variants and Baselines', fontsize=18)
 plt.tight_layout()
-plt.savefig('evaluation/transfer/plots/xlstm_barplots_mlstm.png')
+plt.savefig('evaluation/transfer/plots/xlstm_transfer_barplots_mlstm.png')
 plt.show()
