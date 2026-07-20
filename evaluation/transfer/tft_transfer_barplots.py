@@ -94,3 +94,33 @@ for i, h in enumerate(horizons):
 plt.tight_layout()
 plt.savefig('evaluation/transfer/plots/tft_weather_transfer_barplots.png')
 plt.show()
+
+
+# ------------------------------------------------------------------
+# Create LaTeX table with NSE results
+# ------------------------------------------------------------------
+rows = []
+
+for spring in transfer_springs:
+    for h in horizons:
+        rows.append({
+            "Spring": spring,
+            "Horizon": h,
+            "Baseline": df_base.query("spring_id == @spring and horizon == @h")["nse"].iloc[0],
+            "Last Known": df_base_lk.query("spring_id == @spring and horizon == @h")["nse"].iloc[0],
+            "TFT Individual": df_tft_individual.query("spring_id == @spring and horizon == @h")["nse"].iloc[0],
+            "TFT Multi": df_tft_large.query("spring_id == @spring and horizon == @h")["nse"].iloc[0],
+            "TFT Fine-tuned": df_tft_transfer.query("spring_id == @spring and horizon == @h")["nse"].iloc[0],
+        })
+
+latex_df = pd.DataFrame(rows)
+
+print(
+    latex_df.to_latex(
+        index=False,
+        float_format="%.3f",
+        caption="NSE scores for each spring and forecast horizon.",
+        label="tab:nse_transfer_results",
+        escape=False
+    )
+)

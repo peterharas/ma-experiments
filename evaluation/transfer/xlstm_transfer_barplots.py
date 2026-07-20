@@ -97,3 +97,33 @@ for i, h in enumerate(horizons):
 plt.tight_layout()
 plt.savefig('evaluation/transfer/plots/xlstm_transfer_barplots_mlstm.png')
 plt.show()
+
+
+# ------------------------------------------------------------------
+# Create LaTeX table with NSE results
+# ------------------------------------------------------------------
+rows = []
+
+for spring in transfer_springs:
+    for h in horizons:
+        rows.append({
+            "Spring": spring,
+            "Horizon": h,
+            "Baseline": df_base.query("spring_id == @spring and horizon == @h")["nse"].iloc[0],
+            "Last Known": df_base_lk.query("spring_id == @spring and horizon == @h")["nse"].iloc[0],
+            "xLSTM Individual": df_xlstm.query("spring_id == @spring and horizon == @h")["nse"].iloc[0],
+            "xLSTM Multi": df_xlstm_large.query("spring_id == @spring and horizon == @h")["nse"].iloc[0],
+            "xLSTM Fine-tuned": df_xlstm_transfer.query("spring_id == @spring and horizon == @h")["nse"].iloc[0],
+        })
+
+latex_df = pd.DataFrame(rows)
+
+print(
+    latex_df.to_latex(
+        index=False,
+        float_format="%.3f",
+        caption="NSE scores for each spring and forecast horizon.",
+        label="tab:nse_transfer_results",
+        escape=False
+    )
+)
