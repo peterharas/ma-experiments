@@ -70,28 +70,32 @@ variables = [
         "title": "TFT Training CO$_2$",
         "ylabel": "g CO$_2$",
         "models": ["individual", "transfer"],
-        "scale": 1000
+        "scale": 1000,
+        "category": "CO2"
     },
     {
         "column": "energy training [kWh]",
         "title": "TFT Training Energy",
         "ylabel": "Wh",
         "models": ["individual", "transfer"],
-        "scale": 1000
+        "scale": 1000,
+        "category": "Energy"
     },
     {
         "column": "emissions inference [kg CO₂]",
         "title": "TFT Inference CO$_2$",
         "ylabel": "g CO$_2$",
         "models": ["individual", "large", "transfer"],
-        "scale": 1000
+        "scale": 1000,
+        "category": "CO2"
     },
     {
         "column": "energy inference [kWh]",
         "title": "TFT Inference Energy",
         "ylabel": "Wh",
         "models": ["individual", "large", "transfer"],
-        "scale": 1000
+        "scale": 1000,
+        "category": "Energy"
     },
 ]
 
@@ -195,8 +199,8 @@ for idx, (ax, var) in enumerate(zip(axes, variables)):
 
 
     # Only legend in top-left subplot
-    # if idx == 0:
-    ax.legend(loc="upper left")
+    if idx == 0:
+        ax.legend(loc="upper left")
 
     # Add extra headroom for legend
     ymin, ymax = ax.get_ylim()
@@ -212,5 +216,55 @@ plt.savefig(
     bbox_inches="tight"
 )
 
+# ------------------------------------------------------------------
+# Generate LaTeX Tables (Split CO2 and Energy)
+# ------------------------------------------------------------------
+
+# Dictionaries to hold data for the separate DataFrames
+table_data_co2 = {"Spring ID": transfer_springs}
+table_data_energy = {"Spring ID": transfer_springs}
+
+for var in variables:
+    models = var["models"]
+    
+    for model in models:
+        if model == "individual":
+            df = df_tft_individual
+            model_label = "Individual"
+        elif model == "large":
+            df = df_tft_large
+            model_label = "Multi-spring"
+        elif model == "transfer":
+            df = df_tft_transfer
+            model_label = "Fine-tuned"
+            
+        values = (
+            df
+            .set_index("spring_id")[var["column"]]
+            .reindex(transfer_springs)
+            .values
+            * var["scale"]
+        )
+        
+        # Format the column name clearly: Variable Title (Model) [Unit]
+        col_name = f"{var['title']} ({model_label}) [{var['ylabel']}]"
+        
+        # Route to the appropriate table dictionary based on category
+        if var["category"] == "CO2":
+            table_data_co2[col_name] = values
+        else:
+            table_data_energy[col_name] = values
+
+df_latex_co2 = pd.DataFrame(table_data_co2)
+df_latex_energy = pd.DataFrame(table_data_energy)
+
+# Print LaTeX table representations
+print("\n--- LaTeX Table Output: CO2 Emissions ---\n")
+print(df_latex_co2.to_latex(index=False, escape=False, float_format="%.4f"))
+print("\n-----------------------------------------\n")
+
+print("\n--- LaTeX Table Output: Energy ----------\n")
+print(df_latex_energy.to_latex(index=False, escape=False, float_format="%.4f"))
+print("\n-----------------------------------------\n")
 
 plt.show()
