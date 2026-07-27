@@ -47,7 +47,7 @@ TRANSFER_PATIENCE = 5
 
 MODELS_DIR = os.path.join("xlstm", "models")
 LARGE_MODELS_DIR = os.path.join(MODELS_DIR, "large")
-LARGE_MODEL_FILENAME = "xLSTM_LARGE_20260612_065528.pt"
+LARGE_MODEL_FILENAME = "xLSTM_LARGE_20260612_065528_retrained.pt"
 LARGE_MODEL_PATH = os.path.join(LARGE_MODELS_DIR, LARGE_MODEL_FILENAME)
 
 os.makedirs(MODELS_DIR, exist_ok=True)
@@ -59,7 +59,7 @@ results = []
 # ---------------------------------------------------------
 # LARGE MODEL CONFIGURATION (Must match the pre-trained model)
 # ---------------------------------------------------------
-LM_EMBEDDING_DIM = 64  
+LM_EMBEDDING_DIM = 96  
 LM_DROPOUT = 0.1
 LM_ARCHITECTURE = "slstm_first"
 
