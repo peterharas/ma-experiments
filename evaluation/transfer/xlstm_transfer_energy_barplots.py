@@ -24,7 +24,7 @@ df_xlstm_large = pd.read_csv(
 )
 
 df_xlstm_transfer = pd.read_csv(
-    'results/xLSTM_TRANSFER_results_20260715_153842.csv'
+    'results/xLSTM_TRANSFER_results_20260727_083249.csv'
 )
 
 
